@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Added bilingual English/Chinese README.
+- Added OpenDota public constants sync.
+- Added optional AI coach with local rule fallback, Ollama local mode, and OpenAI-compatible mode.
+- Added stricter AI safety prompt that forbids cheat-like guidance.
+- Added automated self-test script.
+
 ## 0.1.0
 
 - Added Electron desktop app.

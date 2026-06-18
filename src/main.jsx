@@ -5,7 +5,9 @@ import {
   Brain,
   Check,
   CircleAlert,
+  Cloud,
   FolderCheck,
+  MessageSquareText,
   Play,
   RefreshCw,
   Settings,
@@ -127,6 +129,62 @@ function useSetupStatus() {
   return { installSetup, refreshSetup, setup, setupBusy, setupError };
 }
 
+function usePublicData() {
+  const [dataStatus, setDataStatus] = useState(null);
+  const [dataBusy, setDataBusy] = useState(false);
+  const [dataError, setDataError] = useState("");
+
+  async function refreshData() {
+    setDataError("");
+    try {
+      setDataStatus(await requestJson("/api/data/status"));
+    } catch (error) {
+      setDataError(error.message);
+    }
+  }
+
+  async function syncData() {
+    setDataBusy(true);
+    setDataError("");
+    try {
+      setDataStatus(await postJson("/api/data/sync"));
+    } catch (error) {
+      setDataError(error.message);
+    } finally {
+      setDataBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  return { dataBusy, dataError, dataStatus, refreshData, syncData };
+}
+
+function useAiConfig() {
+  const [aiConfig, setAiConfig] = useState(() => {
+    const saved = window.localStorage.getItem("dota2-help-tool-ai");
+    if (saved) return JSON.parse(saved);
+    return {
+      enabled: false,
+      provider: "ollama",
+      endpoint: "http://127.0.0.1:11434/api/chat",
+      model: "llama3.1",
+      apiKey: "",
+      language: "zh"
+    };
+  });
+
+  function updateAiConfig(next) {
+    const merged = { ...aiConfig, ...next };
+    setAiConfig(merged);
+    window.localStorage.setItem("dota2-help-tool-ai", JSON.stringify(merged));
+  }
+
+  return { aiConfig, updateAiConfig };
+}
+
 function StatusBadge({ connected }) {
   return (
     <div className={connected ? "status connected" : "status"}>
@@ -188,9 +246,118 @@ function SetupPanel({ setup, setupBusy, setupError, onInstall, onRefresh }) {
   );
 }
 
+function DataPanel({ dataBusy, dataError, dataStatus, onRefresh, onSync }) {
+  const ready = dataStatus?.hasCache;
+  const generatedAt = dataStatus?.generatedAt ? new Date(dataStatus.generatedAt).toLocaleString() : "未同步";
+
+  return (
+    <aside className="panel setup-panel">
+      <div className="panel-title">
+        <Cloud size={18} />
+        <h2>公开数据</h2>
+      </div>
+      <div className={ready ? "setup-status ready" : "setup-status"}>
+        {ready ? <FolderCheck size={18} /> : <CircleAlert size={18} />}
+        <strong>{ready ? "OpenDota 数据已缓存" : "可同步公开数据"}</strong>
+      </div>
+      <p className="setup-copy">
+        只下载 OpenDota 的公开英雄和物品常量，用于补充名称、数量和后续复盘数据，不读取游戏进程。
+      </p>
+      <div className="data-metrics">
+        <Stat label="英雄" value={dataStatus?.heroCount ?? 0} />
+        <Stat label="物品" value={dataStatus?.itemCount ?? 0} />
+      </div>
+      <code className="path-line">{generatedAt}</code>
+      {dataError ? <p className="setup-error">{dataError}</p> : null}
+      <div className="setup-actions">
+        <button className="ghost-button" type="button" onClick={onSync} disabled={dataBusy}>
+          {dataBusy ? <RefreshCw className="spin" size={17} /> : <Cloud size={17} />}
+          同步公开数据
+        </button>
+        <button className="icon-button" type="button" onClick={onRefresh} aria-label="刷新数据状态" title="刷新数据状态">
+          <RefreshCw size={17} />
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function AiPanel({ aiConfig, onConfigChange }) {
+  const [coachText, setCoachText] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  async function askCoach() {
+    setAiBusy(true);
+    setAiError("");
+    try {
+      const result = await postJson("/api/ai/coach", aiConfig);
+      setCoachText(result.text);
+    } catch (error) {
+      setAiError(error.message);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  return (
+    <aside className="panel ai-panel">
+      <div className="panel-title">
+        <MessageSquareText size={18} />
+        <h2>AI 教练</h2>
+      </div>
+      <p className="setup-copy">
+        默认使用本地规则解释。只有开启 AI 并填写接口后，才会把当前建议摘要发送到你配置的模型服务。
+      </p>
+      <label className="toggle-line">
+        <input
+          checked={aiConfig.enabled}
+          type="checkbox"
+          onChange={(event) => onConfigChange({ enabled: event.target.checked })}
+        />
+        启用外部或本地 AI 接口
+      </label>
+      <div className="ai-grid">
+        <label>
+          <span>Provider</span>
+          <select value={aiConfig.provider} onChange={(event) => onConfigChange({ provider: event.target.value })}>
+            <option value="ollama">Ollama local</option>
+            <option value="openai-compatible">OpenAI compatible</option>
+          </select>
+        </label>
+        <label>
+          <span>Model</span>
+          <input value={aiConfig.model} onChange={(event) => onConfigChange({ model: event.target.value })} />
+        </label>
+        <label className="wide">
+          <span>Endpoint</span>
+          <input value={aiConfig.endpoint} onChange={(event) => onConfigChange({ endpoint: event.target.value })} />
+        </label>
+        <label className="wide">
+          <span>API Key</span>
+          <input
+            placeholder="仅 OpenAI-compatible 需要"
+            type="password"
+            value={aiConfig.apiKey}
+            onChange={(event) => onConfigChange({ apiKey: event.target.value })}
+          />
+        </label>
+      </div>
+      <button className="ghost-button" type="button" onClick={askCoach} disabled={aiBusy}>
+        {aiBusy ? <RefreshCw className="spin" size={17} /> : <Brain size={17} />}
+        生成教练解释
+      </button>
+      {aiError ? <p className="setup-error">{aiError}</p> : null}
+      {coachText ? <pre className="coach-output">{coachText}</pre> : null}
+    </aside>
+  );
+}
+
 export default function App() {
   const { snapshot, setSnapshot, connected } = useLiveSnapshot();
   const { installSetup, refreshSetup, setup, setupBusy, setupError } = useSetupStatus();
+  const { dataBusy, dataError, dataStatus, refreshData, syncData } = usePublicData();
+  const { aiConfig, updateAiConfig } = useAiConfig();
   const [busy, setBusy] = useState(false);
 
   const gameState = snapshot?.gameState ?? {};
@@ -289,6 +456,16 @@ export default function App() {
             onInstall={installSetup}
             onRefresh={refreshSetup}
           />
+
+          <DataPanel
+            dataBusy={dataBusy}
+            dataError={dataError}
+            dataStatus={dataStatus}
+            onRefresh={refreshData}
+            onSync={syncData}
+          />
+
+          <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
 
           <aside className="panel threat-panel">
             <div className="panel-title">

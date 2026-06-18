@@ -5,6 +5,8 @@ const { WebSocketServer } = require("ws");
 const { parseGameState } = require("./gsi.cjs");
 const { recommend, threatLabels } = require("./recommendation.cjs");
 const { installConfig, scanSetup } = require("./setup.cjs");
+const { aiCoach } = require("./ai.cjs");
+const { cacheStatus, publicDataSummary, syncPublicData } = require("./public-data.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -118,6 +120,32 @@ function createApp() {
     } catch (error) {
       res.status(404).json({
         code: error.code ?? "SETUP_FAILED",
+        message: error.message
+      });
+    }
+  });
+
+  app.get("/api/data/status", (_req, res) => {
+    res.json(publicDataSummary());
+  });
+
+  app.post("/api/data/sync", async (_req, res) => {
+    try {
+      res.json(await syncPublicData());
+    } catch (error) {
+      res.status(502).json({
+        code: "PUBLIC_DATA_SYNC_FAILED",
+        message: error.message
+      });
+    }
+  });
+
+  app.post("/api/ai/coach", async (req, res) => {
+    try {
+      res.json(await aiCoach(req.body ?? {}, snapshot(), cacheStatus()));
+    } catch (error) {
+      res.status(502).json({
+        code: "AI_COACH_FAILED",
         message: error.message
       });
     }

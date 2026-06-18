@@ -105,6 +105,7 @@ h2 {
 .state-panel,
 .threat-panel,
 .setup-panel,
+.ai-panel,
 .advice-panel {
   padding: 18px;
 }
@@ -350,6 +351,78 @@ h2 {
 .setup-actions {
   display: flex;
   gap: 8px;
+}
+
+.data-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.data-metrics .stat {
+  min-height: 58px;
+}
+
+.data-metrics .stat strong {
+  font-size: 18px;
+}
+
+.toggle-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  color: #314149;
+  font-size: 14px;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ai-grid label {
+  display: grid;
+  gap: 5px;
+}
+
+.ai-grid label.wide {
+  grid-column: 1 / -1;
+}
+
+.ai-grid span {
+  color: #7b6d63;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ai-grid input,
+.ai-grid select {
+  min-width: 0;
+  height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #d4c8b8;
+  border-radius: 8px;
+  color: #172126;
+  background: #fffaf0;
+}
+
+.coach-output {
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  color: #233238;
+  background: #f7f5f0;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .threat-list {

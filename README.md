@@ -1,169 +1,228 @@
 # Dota 2 Help Tool
 
-一个面向新手的 Dota 2 本地装备建议工具。项目目标是开源分发，让玩家下载安装到自己的电脑上运行，不需要域名、不需要云服务器、不需要账号系统。
+> Local-only Dota 2 item suggestion desktop app for beginners.  
+> 面向 Dota 2 新手的本地装备建议桌面工具。
 
-当前 MVP 使用 Dota 2 Game State Integration 接收只读状态数据，并根据英雄、时间、金钱、已有物品和局势标签给出下一件装备建议。
+[Download v0.2.0](https://github.com/skylangy/Dota2-help-tool/releases) · [Security Policy](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
-## 产品形态
+## English
 
-推荐形态是本地桌面应用：
+### What It Does
 
-- 玩家从 GitHub Releases 下载 Windows 安装包或 zip。
-- 应用启动后在本机打开 `127.0.0.1:3008` GSI 接收服务。
-- Dota 2 通过 GSI 把只读状态发送到本机。
-- Electron 窗口展示实时建议。
-- 所有逻辑和数据都在玩家电脑本地运行。
-- 首次启动可在应用内点击“安装 GSI 配置”，减少手动复制文件的步骤。
+Dota 2 Help Tool gives beginner-friendly item suggestions while you play. It runs on your own computer, listens only on `127.0.0.1`, and receives read-only Dota 2 Game State Integration data.
 
-这比做网站更适合本项目：不需要域名，也更符合“只读、本地、可审计”的安全边界。
+Current features:
 
-## 安全边界
+- Electron desktop app for Windows.
+- Local GSI receiver at `http://127.0.0.1:3008/gsi`.
+- Real-time hero, time, level, gold, and item display.
+- Rule-based next-item recommendations with reasons.
+- Manual match-context tags such as heavy control, magic burst, evasion, and healing.
+- OpenDota public constants sync for hero/item metadata.
+- Optional AI coach:
+  - Local rule fallback works without any AI setup.
+  - Optional Ollama local model support.
+  - Optional OpenAI-compatible endpoint support if the user provides their own endpoint and key.
+- One-click GSI config installation where the Dota 2 config directory can be detected.
 
-本项目只做学习建议，不做任何自动化游戏操作。
+### Safety Boundary
 
-- 不读取 Dota 2 或 Steam 进程内存
-- 不注入 DLL
-- 不 Hook DirectX/Vulkan
-- 不拦截或解析网络封包
-- 不修改游戏文件
-- 不自动买装备、放技能、移动或模拟输入
-- 不提供战争迷雾外的隐藏信息
+This project is designed to avoid cheat-like capabilities.
 
-## 开发运行
+It does **not**:
 
-安装依赖：
+- Read Dota 2 or Steam process memory.
+- Inject DLLs.
+- Hook DirectX, Vulkan, Steam, or Dota 2.
+- Capture or parse network packets.
+- Modify Dota 2 executable/game files.
+- Automate input, camera, movement, spell casts, item purchases, or macros.
+- Access hidden enemy information or fog-of-war information.
 
-```bash
-npm install
-```
+The app only uses:
 
-运行网页开发模式：
+- Dota 2 Game State Integration JSON sent by the game to localhost.
+- Manual user-selected context tags.
+- Public OpenDota constants data.
+- Optional user-configured AI endpoint for explanation only.
 
-```bash
-npm run dev
-```
+Sources:
 
-运行桌面开发模式：
+- OpenDota API documentation: https://docs.opendota.com/
+- Dota 2 GSI launch option reference: https://docs.rs/dota-gsi
+- Steam VAC support: https://help.steampowered.com/en/faqs/view/571A-97DA-70E9-FF74
+- Dota 2 GSI setup used by Overwolf apps: https://support.overwolf.com/support/solutions/articles/9000212745-how-to-enable-game-state-integration-for-dota-2
 
-```bash
-npm run desktop
-```
+### Player Setup
 
-网页开发地址：
-
-```text
-http://127.0.0.1:5173
-```
-
-本地 GSI 接收地址：
-
-```text
-http://127.0.0.1:3008/gsi
-```
-
-页面里有“载入演示状态”按钮，可以在不开 Dota 2 的情况下验证推荐流程。
-
-## 打包本地应用
-
-生成未安装的 Windows 桌面包：
-
-```bash
-npm run pack
-```
-
-生成可分发安装包和 zip：
-
-```bash
-npm run dist
-```
-
-产物会输出到：
-
-```text
-release/
-```
-
-开源发布时，建议把 `release/` 里的安装包上传到 GitHub Releases，而不是提交进 git 仓库。
-
-## Dota 2 GSI 配置
-
-推荐方式：打开桌面应用后点击“安装 GSI 配置”。
-
-手动方式：把这个文件复制到 Dota 2 的 GSI 配置目录：
-
-```text
-config/gamestate_integration_dota2_help_tool.cfg
-```
-
-常见目标目录类似：
-
-```text
-Steam\steamapps\common\dota 2 beta\game\dota\cfg\gamestate_integration\
-```
-
-如果没有 `gamestate_integration` 文件夹，可以手动创建。
-
-然后给 Dota 2 添加启动项：
+1. Download the Windows installer or zip from GitHub Releases.
+2. Open the app.
+3. Click `Install GSI Config`.
+4. In Steam, open Dota 2 Properties and add this launch option:
 
 ```text
 -gamestateintegration
 ```
 
-启动本工具后再进入 Dota 2 比赛，工具会接收本机 GSI 数据。
+5. Start Dota 2 and enter a match.
 
-## 当前功能
-
-- Electron 本地桌面窗口
-- 本地 HTTP GSI 接收服务
-- WebSocket 实时推送到页面
-- 当前英雄、时间、等级、金钱、物品显示
-- GSI 配置检测和安装按钮
-- 局势标签选择
-- 基于规则的装备建议
-- 示例英雄：主宰、幻影刺客、水晶室女、狙击手
-
-## 开源建议
-
-建议使用 MIT License，方便玩家、开发者和社区贡献者自由使用和二次开发。
-
-推荐仓库结构：
+The GSI endpoint is:
 
 ```text
-config/        Dota 2 GSI 配置模板
-data/          英雄和物品知识库
-electron/      桌面应用入口
-server/        本地 GSI 服务和推荐逻辑
-src/           React 实时面板
+http://127.0.0.1:3008/gsi
 ```
 
-发布流程：
+### AI Coach
 
-1. 更新版本号。
-2. 运行 `npm run lint`、`npm run build`、`npm audit --audit-level=moderate`。
-3. 运行 `npm run dist`。
-4. 在 GitHub Releases 上传安装包和 zip。
-5. 在 release note 里说明安全边界和数据来源。
+AI is optional and off by default.
 
-建议上传的文件：
+Default mode uses local rule explanations. If you enable AI, the app sends only the current recommendation summary to the endpoint you configure. No API key is included in this repository.
+
+Supported modes:
+
+- `Ollama local`: default endpoint `http://127.0.0.1:11434/api/chat`
+- `OpenAI compatible`: any chat-completions compatible endpoint and user-provided key
+
+The AI prompt explicitly forbids memory reading, injection, packet capture, input automation, hidden-information claims, and anti-cheat bypass guidance.
+
+### Developer Setup
+
+```bash
+npm install
+npm run desktop
+```
+
+Web dev mode:
+
+```bash
+npm run dev
+```
+
+Self-test:
+
+```bash
+npm run self-test
+```
+
+Release build:
+
+```bash
+npm run dist
+```
+
+Artifacts are written to:
 
 ```text
-release/Dota 2 Help Tool Setup 0.1.0.exe
-release/Dota 2 Help Tool-0.1.0-win.zip
+release/
 ```
 
-不建议上传：
+## 中文
+
+### 这个工具做什么
+
+Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只在玩家自己的电脑上运行，只监听 `127.0.0.1`，通过 Dota 2 Game State Integration 接收游戏主动发出的只读状态数据。
+
+当前功能：
+
+- Windows Electron 桌面应用。
+- 本地 GSI 接收地址：`http://127.0.0.1:3008/gsi`。
+- 实时显示英雄、时间、等级、金钱、已有物品。
+- 基于规则的下一件装备建议，并解释原因。
+- 手动局势标签：控制多、魔法爆发高、闪避、回复强等。
+- 从 OpenDota 同步公开英雄/物品常量数据。
+- 可选 AI 教练：
+  - 默认不需要 AI，使用本地规则解释。
+  - 可选本地 Ollama 模型。
+  - 可选 OpenAI-compatible 接口，由用户自己填写 endpoint 和 key。
+- 如果检测到 Dota 2 目录，可以一键安装 GSI 配置文件。
+
+### 安全边界
+
+这个项目的设计目标是避免任何类似外挂的能力。
+
+它不会：
+
+- 读取 Dota 2 或 Steam 进程内存。
+- 注入 DLL。
+- Hook DirectX、Vulkan、Steam 或 Dota 2。
+- 抓包或解析网络封包。
+- 修改 Dota 2 可执行文件或游戏核心文件。
+- 自动输入、自动移动、自动买装备、自动放技能、宏操作。
+- 读取战争迷雾外的信息或敌方隐藏信息。
+
+它只使用：
+
+- Dota 2 主动发送到 localhost 的 GSI JSON。
+- 玩家手动选择的局势标签。
+- OpenDota 公开常量数据。
+- 用户主动配置的 AI 接口，仅用于解释建议。
+
+参考来源：
+
+- OpenDota API 文档：https://docs.opendota.com/
+- Dota 2 GSI 启动项参考：https://docs.rs/dota-gsi
+- Steam VAC 支持页面：https://help.steampowered.com/en/faqs/view/571A-97DA-70E9-FF74
+- Overwolf 的 Dota 2 GSI 设置说明：https://support.overwolf.com/support/solutions/articles/9000212745-how-to-enable-game-state-integration-for-dota-2
+
+### 玩家如何使用
+
+1. 从 GitHub Releases 下载 Windows 安装包或 zip。
+2. 打开应用。
+3. 点击 `安装 GSI 配置`。
+4. 在 Steam 的 Dota 2 启动项里加入：
 
 ```text
-release/win-unpacked/
-release/builder-debug.yml
-node_modules/
-dist/
+-gamestateintegration
 ```
 
-## 下一步
+5. 启动 Dota 2 并进入比赛。
 
-- 扩展英雄和物品数据
-- 增加敌方阵容手动选择
-- 加入 OpenDota/STRATZ 战后复盘
-- 增加装备购买时间线分析
-- 增加首次启动时的 GSI 配置检测
+GSI 接收地址：
+
+```text
+http://127.0.0.1:3008/gsi
+```
+
+### AI 教练
+
+AI 默认关闭。
+
+默认模式会使用本地规则生成解释，不会调用外部模型。只有你主动开启 AI 并填写模型接口时，应用才会把“当前建议摘要”发送到你配置的 endpoint。本仓库不会内置任何 API key。
+
+支持模式：
+
+- `Ollama local`：默认 endpoint 为 `http://127.0.0.1:11434/api/chat`
+- `OpenAI compatible`：用户自己提供兼容 chat-completions 的 endpoint 和 key
+
+AI 系统提示中明确禁止内存读取、注入、抓包、自动操作、隐藏信息声称和绕过反作弊的指导。
+
+### 开发
+
+```bash
+npm install
+npm run desktop
+```
+
+网页开发模式：
+
+```bash
+npm run dev
+```
+
+自测：
+
+```bash
+npm run self-test
+```
+
+发布构建：
+
+```bash
+npm run dist
+```
+
+构建产物会输出到：
+
+```text
+release/
+```
