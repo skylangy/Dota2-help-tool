@@ -1,0 +1,73 @@
+{
+  "name": "dota2-help-tool",
+  "version": "0.1.0",
+  "private": false,
+  "description": "A safe local Dota 2 learning assistant that uses Game State Integration for item suggestions.",
+  "author": "Dota 2 Help Tool contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skylangy/Dota2-help-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skylangy/Dota2-help-tool/issues"
+  },
+  "homepage": "https://github.com/skylangy/Dota2-help-tool#readme",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "node scripts/dev.cjs",
+    "desktop": "node scripts/desktop-dev.cjs",
+    "dev:server": "node server/server.cjs",
+    "dev:client": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "preview": "vite preview --host 127.0.0.1",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9.29.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^15.15.0",
+    "lucide-react": "^1.21.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "vite": "^8.0.16"
+  },
+  "build": {
+    "appId": "com.dota2helptool.app",
+    "productName": "Dota 2 Help Tool",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "server/**/*",
+      "data/**/*",
+      "config/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

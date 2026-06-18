@@ -1,0 +1,54 @@
+{
+  "npc_dota_hero_juggernaut": {
+    "name": "主宰",
+    "role": "核心",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_bfury", "item_manta", "item_black_king_bar"],
+    "late": ["item_butterfly", "item_abyssal_blade", "item_satanic"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar", "item_manta"],
+      "single_target_catch": ["item_linken_sphere"],
+      "evasion": ["item_monkey_king_bar"],
+      "tank_frontline": ["item_silver_edge"]
+    }
+  },
+  "npc_dota_hero_phantom_assassin": {
+    "name": "幻影刺客",
+    "role": "核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_bfury", "item_black_king_bar", "item_desolator"],
+    "late": ["item_abyssal_blade", "item_satanic", "item_butterfly"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_linken_sphere"],
+      "evasion": ["item_monkey_king_bar"],
+      "kite": ["item_blink"]
+    }
+  },
+  "npc_dota_hero_crystal_maiden": {
+    "name": "水晶室女",
+    "role": "辅助",
+    "lane": ["item_magic_wand", "item_boots"],
+    "core": ["item_glimmer_cape", "item_force_staff"],
+    "late": ["item_blink", "item_black_king_bar", "item_ultimate_scepter"],
+    "situational": {
+      "magic_burst": ["item_glimmer_cape", "item_pipe"],
+      "physical_burst": ["item_force_staff", "item_glimmer_cape"],
+      "single_target_catch": ["item_lotus_orb"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_sniper": {
+    "name": "狙击手",
+    "role": "核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_dragon_lance", "item_hurricane_pike", "item_manta"],
+    "late": ["item_black_king_bar", "item_butterfly", "item_satanic"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "gap_close": ["item_hurricane_pike", "item_force_staff"],
+      "single_target_catch": ["item_linken_sphere"],
+      "evasion": ["item_monkey_king_bar"]
+    }
+  }
+}
