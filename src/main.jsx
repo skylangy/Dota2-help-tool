@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
+  BarChart3,
   Brain,
   Check,
   CircleAlert,
@@ -9,6 +10,7 @@ import {
   FolderCheck,
   Maximize2,
   MessageSquareText,
+  Search,
   Minimize2,
   Play,
   RefreshCw,
@@ -163,6 +165,27 @@ function usePublicData() {
   return { dataBusy, dataError, dataStatus, refreshData, syncData };
 }
 
+function useHeroCatalog() {
+  const [heroes, setHeroes] = useState([]);
+  const [heroError, setHeroError] = useState("");
+
+  async function refreshHeroes() {
+    setHeroError("");
+    try {
+      const result = await requestJson("/api/heroes");
+      setHeroes(result.heroes ?? []);
+    } catch (error) {
+      setHeroError(error.message);
+    }
+  }
+
+  useEffect(() => {
+    refreshHeroes();
+  }, []);
+
+  return { heroes, heroError, refreshHeroes };
+}
+
 function useAiConfig() {
   const [aiConfig, setAiConfig] = useState(() => {
     const saved = window.localStorage.getItem("dota2-help-tool-ai");
@@ -210,6 +233,60 @@ function ThreatToggle({ id, label, active, onToggle }) {
       {active ? <Check size={15} /> : <Shield size={15} />}
       <span>{label}</span>
     </button>
+  );
+}
+
+function EnemyLineupPanel({ activeEnemyHeroes, heroes, heroError, inferredThreats, onChange, onRefresh }) {
+  const [query, setQuery] = useState("");
+  const selected = new Set(activeEnemyHeroes);
+  const filteredHeroes = heroes
+    .filter((hero) => (hero.name ?? "").toLowerCase().includes(query.toLowerCase()) || hero.id.toLowerCase().includes(query.toLowerCase()))
+    .slice(0, 40);
+
+  function toggleHero(heroId) {
+    const next = selected.has(heroId)
+      ? activeEnemyHeroes.filter((id) => id !== heroId)
+      : activeEnemyHeroes.length >= 5
+        ? [...activeEnemyHeroes.slice(1), heroId]
+        : [...activeEnemyHeroes, heroId];
+    onChange(next);
+  }
+
+  return (
+    <aside className="panel lineup-panel">
+      <div className="panel-title">
+        <Search size={18} />
+        <h2>敌方阵容</h2>
+      </div>
+      <p className="setup-copy">手动选择敌方英雄，用公开角色数据推断局势标签。不会自动读取隐藏信息。</p>
+      <input
+        className="search-input"
+        placeholder="搜索英雄，先同步公开数据"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {heroError ? <p className="setup-error">{heroError}</p> : null}
+      <div className="selected-line">
+        {activeEnemyHeroes.length > 0 ? `${activeEnemyHeroes.length}/5 已选择` : "未选择敌方英雄"}
+        <button className="text-button" type="button" onClick={onRefresh}>刷新英雄</button>
+      </div>
+      <div className="hero-picker">
+        {filteredHeroes.map((hero) => (
+          <button
+            className={selected.has(hero.id) ? "hero-chip active" : "hero-chip"}
+            key={hero.id}
+            type="button"
+            onClick={() => toggleHero(hero.id)}
+          >
+            {hero.name}
+          </button>
+        ))}
+      </div>
+      <div className="inferred-tags">
+        <span>自动推断</span>
+        <p>{inferredThreats.length > 0 ? inferredThreats.join("、") : "暂无自动标签"}</p>
+      </div>
+    </aside>
   );
 }
 
@@ -354,6 +431,64 @@ function AiPanel({ aiConfig, onConfigChange }) {
   );
 }
 
+function ReplayPanel() {
+  const [matchId, setMatchId] = useState("");
+  const [replay, setReplay] = useState(null);
+  const [replayBusy, setReplayBusy] = useState(false);
+  const [replayError, setReplayError] = useState("");
+
+  async function loadReplay() {
+    setReplayBusy(true);
+    setReplayError("");
+    try {
+      setReplay(await requestJson(`/api/replay/${matchId.trim()}`));
+    } catch (error) {
+      setReplayError(error.message);
+      setReplay(null);
+    } finally {
+      setReplayBusy(false);
+    }
+  }
+
+  return (
+    <aside className="panel replay-panel">
+      <div className="panel-title">
+        <BarChart3 size={18} />
+        <h2>战后复盘</h2>
+      </div>
+      <p className="setup-copy">输入公开 Match ID，从 OpenDota 拉取战后数据。不会读取本机游戏或 Steam 进程。</p>
+      <div className="replay-input">
+        <input placeholder="Match ID" value={matchId} onChange={(event) => setMatchId(event.target.value)} />
+        <button className="icon-button" type="button" onClick={loadReplay} disabled={replayBusy} aria-label="加载复盘" title="加载复盘">
+          {replayBusy ? <RefreshCw className="spin" size={17} /> : <BarChart3 size={17} />}
+        </button>
+      </div>
+      {replayError ? <p className="setup-error">{replayError}</p> : null}
+      {replay ? (
+        <div className="replay-result">
+          <div className="replay-summary">
+            <Stat label="时长" value={replay.duration} />
+            <Stat label="胜方" value={replay.winner} />
+          </div>
+          <div className="inferred-tags">
+            <span>亮点</span>
+            {replay.highlights.map((line) => <p key={line}>{line}</p>)}
+          </div>
+          <div className="player-table">
+            {replay.players.map((player) => (
+              <div className={player.won ? "player-row won" : "player-row"} key={`${player.heroId}-${player.accountId ?? player.heroName}`}>
+                <strong>{player.heroName}</strong>
+                <span>{player.kda}</span>
+                <span>{player.gpm} GPM</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 function CompactPanel({ connected, gameState, recommendation, onExitCompact, onLoadMock }) {
   const first = recommendation.suggestions?.[0];
 
@@ -391,6 +526,7 @@ export default function App() {
   const { connected, setSnapshot, snapshot } = useLiveSnapshot();
   const { installSetup, refreshSetup, setup, setupBusy, setupError } = useSetupStatus();
   const { dataBusy, dataError, dataStatus, refreshData, syncData } = usePublicData();
+  const { heroes, heroError, refreshHeroes } = useHeroCatalog();
   const { aiConfig, updateAiConfig } = useAiConfig();
   const [busy, setBusy] = useState(false);
   const [compact, setCompact] = useState(false);
@@ -399,7 +535,9 @@ export default function App() {
   const recommendation = snapshot?.recommendation ?? {};
   const context = snapshot?.context ?? { threats: [] };
   const threats = snapshot?.threats ?? {};
-  const activeThreats = useMemo(() => new Set(context.threats ?? []), [context.threats]);
+  const activeThreats = useMemo(() => new Set(context.manualThreats ?? context.threats ?? []), [context.manualThreats, context.threats]);
+  const activeEnemyHeroes = context.enemyHeroes ?? [];
+  const inferredThreats = context.inferredThreats ?? [];
 
   async function setCompactMode(enabled) {
     setCompact(enabled);
@@ -410,7 +548,11 @@ export default function App() {
     const nextThreats = activeThreats.has(id)
       ? [...activeThreats].filter((key) => key !== id)
       : [...activeThreats, id];
-    setSnapshot(await postJson("/api/context", { threats: nextThreats }));
+    setSnapshot(await postJson("/api/context", { manualThreats: nextThreats, enemyHeroes: activeEnemyHeroes }));
+  }
+
+  async function updateEnemyHeroes(enemyHeroes) {
+    setSnapshot(await postJson("/api/context", { manualThreats: [...activeThreats], enemyHeroes }));
   }
 
   async function loadMock() {
@@ -505,7 +647,25 @@ export default function App() {
 
         <div className="right-stack">
           <SetupPanel setup={setup} setupBusy={setupBusy} setupError={setupError} onInstall={installSetup} onRefresh={refreshSetup} />
-          <DataPanel dataBusy={dataBusy} dataError={dataError} dataStatus={dataStatus} onRefresh={refreshData} onSync={syncData} />
+          <DataPanel
+            dataBusy={dataBusy}
+            dataError={dataError}
+            dataStatus={dataStatus}
+            onRefresh={refreshData}
+            onSync={async () => {
+              await syncData();
+              await refreshHeroes();
+            }}
+          />
+          <EnemyLineupPanel
+            activeEnemyHeroes={activeEnemyHeroes}
+            heroes={heroes}
+            heroError={heroError}
+            inferredThreats={inferredThreats.map((key) => threats[key] ?? key)}
+            onChange={updateEnemyHeroes}
+            onRefresh={refreshHeroes}
+          />
+          <ReplayPanel />
           <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
           <aside className="panel threat-panel">
             <div className="panel-title">

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Expanded dedicated hero build rules for common beginner heroes.
+- Added manual enemy lineup selection.
+- Added automatic threat-tag inference from manually selected enemy heroes.
+- Added basic post-match review using the public OpenDota match API.
+- Rewrote item and hero build data with clean UTF-8 Chinese names.
+
 ## 0.3.0
 
 - Added generic recommendation rules for all heroes.

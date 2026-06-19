@@ -9,6 +9,7 @@ Allowed data sources:
 - Dota 2 Game State Integration JSON sent by the game to `127.0.0.1`.
 - Manual context tags selected by the user.
 - Public OpenDota constants data.
+- Public OpenDota match data entered by Match ID.
 - Optional user-configured AI endpoint for explanation only.
 
 The app does not:
@@ -36,6 +37,7 @@ AI is optional and disabled by default. If the user enables AI, the app sends on
 - Dota 2 主动发送到 `127.0.0.1` 的 Game State Integration JSON。
 - 玩家手动选择的局势标签。
 - OpenDota 公开常量数据。
+- 用户输入 Match ID 后拉取的 OpenDota 公开比赛数据。
 - 用户主动配置的 AI endpoint，仅用于解释建议。
 
 应用不会：

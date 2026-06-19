@@ -17,7 +17,9 @@ const threatLabels = {
   kite: "你容易被拉扯",
   high_healing: "敌方回复能力强",
   illusion_enemy: "敌方幻象或召唤物多",
+  invisible_enemy: "敌方隐身英雄多",
   silence_heavy: "敌方沉默多",
+  mana_burn: "敌方削蓝压力高",
   armor_needed: "团队缺少护甲和减攻速",
   dispel_needed: "需要驱散负面状态"
 };

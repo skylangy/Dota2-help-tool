@@ -28,6 +28,16 @@ async function main() {
     assert.equal(mock.recommendation.status, "ready");
     assert.ok(mock.recommendation.suggestions.length > 0);
 
+    const context = await request("/api/context", {
+      method: "POST",
+      body: JSON.stringify({
+        enemyHeroes: ["npc_dota_hero_lion", "npc_dota_hero_zuus"],
+        manualThreats: []
+      })
+    });
+    assert.ok(context.context.threats.includes("control_heavy"));
+    assert.ok(context.context.threats.includes("magic_burst"));
+
     const ai = await request("/api/ai/coach", {
       method: "POST",
       body: JSON.stringify({ enabled: false })
@@ -41,6 +51,9 @@ async function main() {
     const synced = await request("/api/data/sync", { method: "POST" });
     assert.ok(synced.heroCount > 100);
     assert.ok(synced.itemCount > 100);
+
+    const replayResponse = await fetch(`${BASE}/api/replay/not-a-match`);
+    assert.equal(replayResponse.status, 400);
 
     console.log("Self-test passed");
   } finally {

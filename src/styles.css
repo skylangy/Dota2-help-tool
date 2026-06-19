@@ -112,6 +112,8 @@ h2 {
 .threat-panel,
 .setup-panel,
 .ai-panel,
+.lineup-panel,
+.replay-panel,
 .advice-panel {
   padding: 18px;
 }
@@ -436,6 +438,136 @@ h2 {
   font-family: inherit;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.search-input {
+  width: 100%;
+  height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #d4c8b8;
+  border-radius: 8px;
+  color: #172126;
+  background: #fffaf0;
+}
+
+.selected-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0;
+  color: #5c6870;
+  font-size: 13px;
+}
+
+.text-button {
+  border: 0;
+  color: #2d6f74;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hero-picker {
+  max-height: 176px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.hero-chip {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid #e0d7c9;
+  border-radius: 8px;
+  color: #314149;
+  background: #fbf7ef;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.hero-chip.active {
+  color: #f8f1e5;
+  border-color: #274f5c;
+  background: #274f5c;
+}
+
+.inferred-tags {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f7f5f0;
+}
+
+.inferred-tags span {
+  color: #7b6d63;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.inferred-tags p {
+  margin-top: 5px;
+  color: #314149;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.replay-input {
+  display: flex;
+  gap: 8px;
+}
+
+.replay-input input {
+  min-width: 0;
+  flex: 1;
+  height: 42px;
+  padding: 7px 9px;
+  border: 1px solid #d4c8b8;
+  border-radius: 8px;
+  color: #172126;
+  background: #fffaf0;
+}
+
+.replay-result {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.replay-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.player-table {
+  max-height: 220px;
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f7f5f0;
+  color: #4a565b;
+  font-size: 12px;
+}
+
+.player-row.won {
+  background: rgba(226, 244, 235, 0.75);
+}
+
+.player-row strong {
+  color: #172126;
 }
 
 .compact-app {

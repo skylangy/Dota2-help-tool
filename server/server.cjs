@@ -6,7 +6,9 @@ const { parseGameState } = require("./gsi.cjs");
 const { recommend, threatLabels } = require("./recommendation.cjs");
 const { installConfig, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
-const { cacheStatus, publicDataSummary, syncPublicData } = require("./public-data.cjs");
+const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
+const { inferThreats } = require("./lineup.cjs");
+const { fetchMatch } = require("./replay.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -28,6 +30,8 @@ function createState() {
       items: []
     },
     context: {
+      enemyHeroes: [],
+      manualThreats: [],
       threats: []
     }
   };
@@ -77,8 +81,18 @@ function createApp() {
   });
 
   app.post("/api/context", (req, res) => {
-    const threats = Array.isArray(req.body?.threats) ? req.body.threats : [];
+    const manualThreats = Array.isArray(req.body?.manualThreats)
+      ? req.body.manualThreats
+      : Array.isArray(req.body?.threats)
+        ? req.body.threats
+        : state.context.manualThreats ?? [];
+    const enemyHeroes = Array.isArray(req.body?.enemyHeroes) ? req.body.enemyHeroes : state.context.enemyHeroes ?? [];
+    const inferredThreats = inferThreats(enemyHeroes, heroCatalog());
+    const threats = [...new Set([...manualThreats, ...inferredThreats])];
     state.context = {
+      enemyHeroes,
+      inferredThreats,
+      manualThreats: manualThreats.filter((key) => Object.hasOwn(threatLabels, key)),
       threats: threats.filter((key) => Object.hasOwn(threatLabels, key))
     };
     broadcast();
@@ -104,6 +118,9 @@ function createApp() {
       items: ["item_magic_wand", "item_phase_boots", "item_bfury"]
     };
     state.context = {
+      enemyHeroes: ["npc_dota_hero_lion", "npc_dota_hero_zuus"],
+      inferredThreats: ["control_heavy", "magic_burst"],
+      manualThreats: ["control_heavy", "magic_burst"],
       threats: ["control_heavy", "magic_burst"]
     };
     broadcast();
@@ -129,6 +146,10 @@ function createApp() {
     res.json(publicDataSummary());
   });
 
+  app.get("/api/heroes", (_req, res) => {
+    res.json({ heroes: heroCatalog() });
+  });
+
   app.post("/api/data/sync", async (_req, res) => {
     try {
       res.json(await syncPublicData());
@@ -146,6 +167,17 @@ function createApp() {
     } catch (error) {
       res.status(502).json({
         code: "AI_COACH_FAILED",
+        message: error.message
+      });
+    }
+  });
+
+  app.get("/api/replay/:matchId", async (req, res) => {
+    try {
+      res.json(await fetchMatch(req.params.matchId));
+    } catch (error) {
+      res.status(error.code === "INVALID_MATCH_ID" ? 400 : 502).json({
+        code: error.code ?? "REPLAY_FETCH_FAILED",
         message: error.message
       });
     }

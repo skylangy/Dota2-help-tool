@@ -20,6 +20,8 @@ Current features:
 - Generic recommendation rules for all heroes.
 - OpenDota public constants sync for latest hero/item metadata and hero roles.
 - Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, silence, armor need, and dispel need.
+- Manual enemy lineup selection. The app infers tags only from heroes you choose manually.
+- Basic post-match review from a public OpenDota Match ID.
 - Optional edge mini-window. This is a normal always-on-top desktop window, not an injected game overlay.
 - Optional AI coach:
   - Local rule fallback works without AI setup.
@@ -48,6 +50,7 @@ The app only uses:
 - Manual user-selected context tags.
 - Public OpenDota constants data.
 - Optional user-configured AI endpoint for explanation only.
+- Public OpenDota match data for post-match review.
 
 The edge mini-window is a normal Electron window placed near the screen edge after the user clicks the button. It does not attach to Dota 2, does not modify the game, and does not use an in-game overlay hook.
 
@@ -71,7 +74,9 @@ Sources:
 
 5. Start Dota 2 and enter a match.
 6. Optional: click `Sync Public Data` so generic rules can use latest OpenDota hero role metadata.
-7. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
+7. Optional: manually choose enemy heroes to infer match-context tags.
+8. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
+9. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
 
 ### Developer Setup
 
@@ -107,6 +112,8 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - 所有英雄都有通用推荐规则。
 - 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
 - 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、沉默多、缺护甲、需要驱散等。
+- 手动选择敌方阵容。应用只根据你手动选择的英雄推断局势标签。
+- 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据。
 - 可选屏幕边缘小窗。它是普通置顶桌面窗口，不是注入式游戏内 overlay。
 - 可选 AI 教练：
   - 默认不需要 AI，使用本地规则解释。
@@ -134,6 +141,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - Dota 2 主动发送到 localhost 的 GSI JSON。
 - 玩家手动选择的局势标签。
 - OpenDota 公开常量数据。
+- OpenDota 公开比赛数据。
 - 用户主动配置的 AI 接口，仅用于解释建议。
 
 边缘小窗是用户点击按钮后移动到屏幕边缘的普通 Electron 窗口。它不附着到 Dota 2，不修改游戏，也不使用游戏内 overlay Hook。
@@ -158,7 +166,9 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 
 5. 启动 Dota 2 并进入比赛。
 6. 可选：点击 `同步公开数据`，让通用规则使用 OpenDota 最新英雄角色数据。
-7. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
+7. 可选：手动选择敌方英雄，让工具推断局势标签。
+8. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
+9. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
 
 ### 开发
 

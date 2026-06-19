@@ -9,7 +9,8 @@
       "control_heavy": ["item_black_king_bar", "item_manta"],
       "single_target_catch": ["item_linken_sphere"],
       "evasion": ["item_monkey_king_bar"],
-      "tank_frontline": ["item_silver_edge"]
+      "tank_frontline": ["item_silver_edge"],
+      "illusion_enemy": ["item_bfury", "item_mjollnir"]
     }
   },
   "npc_dota_hero_phantom_assassin": {
@@ -22,33 +23,296 @@
       "control_heavy": ["item_black_king_bar"],
       "single_target_catch": ["item_linken_sphere"],
       "evasion": ["item_monkey_king_bar"],
-      "kite": ["item_blink"]
-    }
-  },
-  "npc_dota_hero_crystal_maiden": {
-    "name": "水晶室女",
-    "role": "辅助",
-    "lane": ["item_magic_wand", "item_boots"],
-    "core": ["item_glimmer_cape", "item_force_staff"],
-    "late": ["item_blink", "item_black_king_bar", "item_ultimate_scepter"],
-    "situational": {
-      "magic_burst": ["item_glimmer_cape", "item_pipe"],
-      "physical_burst": ["item_force_staff", "item_glimmer_cape"],
-      "single_target_catch": ["item_lotus_orb"],
-      "high_healing": ["item_spirit_vessel"]
+      "kite": ["item_blink", "item_basher"],
+      "illusion_enemy": ["item_bfury"]
     }
   },
   "npc_dota_hero_sniper": {
     "name": "狙击手",
     "role": "核心",
     "lane": ["item_magic_wand", "item_power_treads"],
-    "core": ["item_dragon_lance", "item_hurricane_pike", "item_manta"],
-    "late": ["item_black_king_bar", "item_butterfly", "item_satanic"],
+    "core": ["item_dragon_lance", "item_hurricane_pike", "item_black_king_bar"],
+    "late": ["item_manta", "item_butterfly", "item_satanic"],
     "situational": {
       "control_heavy": ["item_black_king_bar"],
       "gap_close": ["item_hurricane_pike", "item_force_staff"],
       "single_target_catch": ["item_linken_sphere"],
+      "evasion": ["item_monkey_king_bar"],
+      "illusion_enemy": ["item_mjollnir"]
+    }
+  },
+  "npc_dota_hero_drow_ranger": {
+    "name": "卓尔游侠",
+    "role": "核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_dragon_lance", "item_hurricane_pike", "item_manta"],
+    "late": ["item_black_king_bar", "item_butterfly", "item_satanic"],
+    "situational": {
+      "gap_close": ["item_hurricane_pike", "item_force_staff"],
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_linken_sphere"],
       "evasion": ["item_monkey_king_bar"]
+    }
+  },
+  "npc_dota_hero_skeleton_king": {
+    "name": "冥魂大帝",
+    "role": "核心",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_armlet", "item_blink", "item_black_king_bar"],
+    "late": ["item_desolator", "item_assault", "item_abyssal_blade"],
+    "situational": {
+      "mana_burn": ["item_black_king_bar"],
+      "control_heavy": ["item_black_king_bar"],
+      "evasion": ["item_monkey_king_bar"],
+      "kite": ["item_blink", "item_harpoon"]
+    }
+  },
+  "npc_dota_hero_axe": {
+    "name": "斧王",
+    "role": "三号位/先手",
+    "lane": ["item_vanguard", "item_phase_boots"],
+    "core": ["item_blink", "item_blade_mail", "item_black_king_bar"],
+    "late": ["item_shivas_guard", "item_overwhelming_blink", "item_heart"],
+    "situational": {
+      "magic_burst": ["item_pipe", "item_black_king_bar"],
+      "physical_burst": ["item_crimson_guard", "item_shivas_guard"],
+      "single_target_catch": ["item_lotus_orb"],
+      "armor_needed": ["item_shivas_guard"]
+    }
+  },
+  "npc_dota_hero_tidehunter": {
+    "name": "潮汐猎人",
+    "role": "三号位/团控",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_blink", "item_pipe", "item_shivas_guard"],
+    "late": ["item_black_king_bar", "item_refresher", "item_lotus_orb"],
+    "situational": {
+      "magic_burst": ["item_pipe"],
+      "physical_burst": ["item_crimson_guard", "item_shivas_guard"],
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_lotus_orb"]
+    }
+  },
+  "npc_dota_hero_centaur": {
+    "name": "半人马战行者",
+    "role": "三号位/先手",
+    "lane": ["item_vanguard", "item_phase_boots"],
+    "core": ["item_blink", "item_pipe", "item_crimson_guard"],
+    "late": ["item_heart", "item_shivas_guard", "item_overwhelming_blink"],
+    "situational": {
+      "magic_burst": ["item_pipe"],
+      "physical_burst": ["item_crimson_guard"],
+      "control_heavy": ["item_black_king_bar"],
+      "armor_needed": ["item_shivas_guard"]
+    }
+  },
+  "npc_dota_hero_legion_commander": {
+    "name": "军团指挥官",
+    "role": "三号位/先手",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_blink", "item_blade_mail", "item_black_king_bar"],
+    "late": ["item_assault", "item_abyssal_blade", "item_satanic"],
+    "situational": {
+      "evasion": ["item_monkey_king_bar"],
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_linken_sphere"],
+      "physical_burst": ["item_blade_mail"]
+    }
+  },
+  "npc_dota_hero_bristleback": {
+    "name": "钢背兽",
+    "role": "三号位/前排",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_vanguard", "item_black_king_bar", "item_shivas_guard"],
+    "late": ["item_heart", "item_assault", "item_lotus_orb"],
+    "situational": {
+      "magic_burst": ["item_pipe", "item_black_king_bar"],
+      "physical_burst": ["item_shivas_guard"],
+      "single_target_catch": ["item_lotus_orb", "item_linken_sphere"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_crystal_maiden": {
+    "name": "水晶室女",
+    "role": "辅助",
+    "lane": ["item_magic_wand", "item_tranquil_boots"],
+    "core": ["item_glimmer_cape", "item_force_staff"],
+    "late": ["item_blink", "item_black_king_bar", "item_ultimate_scepter"],
+    "situational": {
+      "magic_burst": ["item_glimmer_cape", "item_pipe"],
+      "physical_burst": ["item_force_staff", "item_ghost"],
+      "single_target_catch": ["item_lotus_orb"],
+      "high_healing": ["item_spirit_vessel"],
+      "invisible_enemy": ["item_dust", "item_ward_dispenser"]
+    }
+  },
+  "npc_dota_hero_lion": {
+    "name": "莱恩",
+    "role": "辅助/控制",
+    "lane": ["item_magic_wand", "item_tranquil_boots"],
+    "core": ["item_blink", "item_force_staff", "item_aether_lens"],
+    "late": ["item_glimmer_cape", "item_ultimate_scepter", "item_sheepstick"],
+    "situational": {
+      "magic_burst": ["item_glimmer_cape"],
+      "physical_burst": ["item_ghost", "item_force_staff"],
+      "single_target_catch": ["item_lotus_orb"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_shadow_shaman": {
+    "name": "暗影萨满",
+    "role": "辅助/推进",
+    "lane": ["item_magic_wand", "item_tranquil_boots"],
+    "core": ["item_blink", "item_aether_lens", "item_glimmer_cape"],
+    "late": ["item_force_staff", "item_ultimate_scepter", "item_refresher"],
+    "situational": {
+      "physical_burst": ["item_ghost", "item_force_staff"],
+      "magic_burst": ["item_glimmer_cape"],
+      "single_target_catch": ["item_lotus_orb"],
+      "control_heavy": ["item_black_king_bar"]
+    }
+  },
+  "npc_dota_hero_witch_doctor": {
+    "name": "巫医",
+    "role": "辅助/输出",
+    "lane": ["item_magic_wand", "item_tranquil_boots"],
+    "core": ["item_glimmer_cape", "item_force_staff", "item_ultimate_scepter"],
+    "late": ["item_blink", "item_black_king_bar", "item_aether_lens"],
+    "situational": {
+      "physical_burst": ["item_ghost", "item_force_staff"],
+      "magic_burst": ["item_glimmer_cape"],
+      "control_heavy": ["item_black_king_bar"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_warlock": {
+    "name": "术士",
+    "role": "辅助/团战",
+    "lane": ["item_magic_wand", "item_arcane_boots"],
+    "core": ["item_glimmer_cape", "item_force_staff", "item_ultimate_scepter"],
+    "late": ["item_refresher", "item_black_king_bar", "item_lotus_orb"],
+    "situational": {
+      "magic_burst": ["item_pipe"],
+      "physical_burst": ["item_force_staff", "item_ghost"],
+      "single_target_catch": ["item_lotus_orb"],
+      "control_heavy": ["item_black_king_bar"]
+    }
+  },
+  "npc_dota_hero_lich": {
+    "name": "巫妖",
+    "role": "辅助",
+    "lane": ["item_magic_wand", "item_tranquil_boots"],
+    "core": ["item_glimmer_cape", "item_force_staff", "item_aether_lens"],
+    "late": ["item_ultimate_scepter", "item_lotus_orb", "item_black_king_bar"],
+    "situational": {
+      "physical_burst": ["item_ghost", "item_force_staff"],
+      "magic_burst": ["item_glimmer_cape", "item_pipe"],
+      "single_target_catch": ["item_lotus_orb"],
+      "illusion_enemy": ["item_shivas_guard"]
+    }
+  },
+  "npc_dota_hero_ogre_magi": {
+    "name": "食人魔魔法师",
+    "role": "辅助/前排",
+    "lane": ["item_magic_wand", "item_arcane_boots"],
+    "core": ["item_midas", "item_force_staff", "item_glimmer_cape"],
+    "late": ["item_sheepstick", "item_lotus_orb", "item_heart"],
+    "situational": {
+      "magic_burst": ["item_pipe"],
+      "physical_burst": ["item_crimson_guard"],
+      "single_target_catch": ["item_lotus_orb"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_nevermore": {
+    "name": "影魔",
+    "role": "中单/核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_dragon_lance", "item_black_king_bar", "item_hurricane_pike"],
+    "late": ["item_butterfly", "item_satanic", "item_monkey_king_bar"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "gap_close": ["item_hurricane_pike"],
+      "evasion": ["item_monkey_king_bar"],
+      "single_target_catch": ["item_linken_sphere"]
+    }
+  },
+  "npc_dota_hero_queenofpain": {
+    "name": "痛苦女王",
+    "role": "中单/法系核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_orchid", "item_black_king_bar", "item_ultimate_scepter"],
+    "late": ["item_sheepstick", "item_linken_sphere", "item_shivas_guard"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_linken_sphere"],
+      "physical_burst": ["item_shivas_guard"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_storm_spirit": {
+    "name": "风暴之灵",
+    "role": "中单/法系核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_orchid", "item_black_king_bar", "item_linken_sphere"],
+    "late": ["item_sheepstick", "item_bloodthorn", "item_shivas_guard"],
+    "situational": {
+      "single_target_catch": ["item_linken_sphere"],
+      "control_heavy": ["item_black_king_bar"],
+      "silence_heavy": ["item_black_king_bar"],
+      "evasion": ["item_bloodthorn"]
+    }
+  },
+  "npc_dota_hero_invoker": {
+    "name": "祈求者",
+    "role": "中单/法系核心",
+    "lane": ["item_magic_wand", "item_power_treads"],
+    "core": ["item_cyclone", "item_blink", "item_black_king_bar"],
+    "late": ["item_sheepstick", "item_ultimate_scepter", "item_refresher"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "single_target_catch": ["item_linken_sphere"],
+      "physical_burst": ["item_shivas_guard"],
+      "gap_close": ["item_blink", "item_force_staff"]
+    }
+  },
+  "npc_dota_hero_pudge": {
+    "name": "帕吉",
+    "role": "先手/前排",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_blink", "item_blade_mail", "item_black_king_bar"],
+    "late": ["item_shivas_guard", "item_heart", "item_lotus_orb"],
+    "situational": {
+      "magic_burst": ["item_pipe", "item_black_king_bar"],
+      "physical_burst": ["item_shivas_guard"],
+      "single_target_catch": ["item_lotus_orb"],
+      "high_healing": ["item_spirit_vessel"]
+    }
+  },
+  "npc_dota_hero_spirit_breaker": {
+    "name": "裂魂人",
+    "role": "游走/先手",
+    "lane": ["item_magic_wand", "item_phase_boots"],
+    "core": ["item_shadow_blade", "item_black_king_bar", "item_harpoon"],
+    "late": ["item_silver_edge", "item_assault", "item_heart"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "evasion": ["item_monkey_king_bar"],
+      "physical_burst": ["item_assault"],
+      "single_target_catch": ["item_linken_sphere"]
+    }
+  },
+  "npc_dota_hero_earthshaker": {
+    "name": "撼地者",
+    "role": "辅助/先手",
+    "lane": ["item_magic_wand", "item_arcane_boots"],
+    "core": ["item_blink", "item_force_staff", "item_ultimate_scepter"],
+    "late": ["item_black_king_bar", "item_refresher", "item_lotus_orb"],
+    "situational": {
+      "control_heavy": ["item_black_king_bar"],
+      "magic_burst": ["item_pipe"],
+      "physical_burst": ["item_force_staff"],
+      "illusion_enemy": ["item_blink", "item_refresher"]
     }
   }
 }

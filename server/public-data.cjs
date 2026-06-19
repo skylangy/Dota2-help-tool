@@ -115,9 +115,32 @@ function getHeroProfile(heroId) {
   return cache.heroes.find((hero) => hero.name === heroId) ?? null;
 }
 
+function heroCatalog() {
+  const cache = readCache();
+  if (!cache) {
+    return [];
+  }
+
+  return cache.heroes
+    .map((hero) => ({
+      id: hero.name,
+      name: hero.localizedName,
+      roles: hero.roles,
+      attackType: hero.attackType,
+      primaryAttr: hero.primaryAttr
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getPublicDataCache() {
+  return readCache();
+}
+
 module.exports = {
   cacheStatus,
   getHeroProfile,
+  getPublicDataCache,
+  heroCatalog,
   publicDataSummary,
   syncPublicData
 };
