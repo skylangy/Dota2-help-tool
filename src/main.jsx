@@ -7,7 +7,9 @@ import {
   CircleAlert,
   Cloud,
   FolderCheck,
+  Maximize2,
   MessageSquareText,
+  Minimize2,
   Play,
   RefreshCw,
   Settings,
@@ -70,7 +72,6 @@ function useLiveSnapshot() {
 
     const connect = () => {
       socket = new WebSocket(WS_URL);
-
       socket.addEventListener("open", () => setConnected(true));
       socket.addEventListener("close", () => {
         setConnected(false);
@@ -93,7 +94,7 @@ function useLiveSnapshot() {
     };
   }, []);
 
-  return { snapshot, setSnapshot, connected };
+  return { connected, setSnapshot, snapshot };
 }
 
 function useSetupStatus() {
@@ -261,7 +262,7 @@ function DataPanel({ dataBusy, dataError, dataStatus, onRefresh, onSync }) {
         <strong>{ready ? "OpenDota 数据已缓存" : "可同步公开数据"}</strong>
       </div>
       <p className="setup-copy">
-        只下载 OpenDota 的公开英雄和物品常量，用于补充名称、数量和后续复盘数据，不读取游戏进程。
+        只下载 OpenDota 的公开英雄和物品常量，用于识别最新英雄和通用规则，不读取游戏进程。
       </p>
       <div className="data-metrics">
         <Stat label="英雄" value={dataStatus?.heroCount ?? 0} />
@@ -353,12 +354,46 @@ function AiPanel({ aiConfig, onConfigChange }) {
   );
 }
 
+function CompactPanel({ connected, gameState, recommendation, onExitCompact, onLoadMock }) {
+  const first = recommendation.suggestions?.[0];
+
+  return (
+    <main className="app compact-app">
+      <header className="compact-header">
+        <div>
+          <p className="eyebrow">Dota 2 Help Tool</p>
+          <h1>{recommendation.heroName ?? "等待数据"}</h1>
+        </div>
+        <button className="icon-button" type="button" onClick={onExitCompact} aria-label="退出小窗模式" title="退出小窗模式">
+          <Maximize2 size={17} />
+        </button>
+      </header>
+      <StatusBadge connected={connected} />
+      <div className="compact-stats">
+        <Stat label="时间" value={formatTime(gameState.gameTime)} />
+        <Stat label="金钱" value={gameState.gold ?? 0} />
+      </div>
+      <section className="compact-card">
+        <span>{first ? priorityLabels[first.priority] : "等待"}</span>
+        <h2>{first?.itemName ?? recommendation.title ?? "等待 Dota 2 GSI 数据"}</h2>
+        <p>{first?.reason ?? recommendation.notes?.[0] ?? "进入比赛后显示建议。"}</p>
+      </section>
+      <button className="ghost-button" type="button" onClick={onLoadMock}>
+        <Play size={17} />
+        演示状态
+      </button>
+      <p className="compact-safety">普通置顶窗口，不注入、不读内存、不自动操作。</p>
+    </main>
+  );
+}
+
 export default function App() {
-  const { snapshot, setSnapshot, connected } = useLiveSnapshot();
+  const { connected, setSnapshot, snapshot } = useLiveSnapshot();
   const { installSetup, refreshSetup, setup, setupBusy, setupError } = useSetupStatus();
   const { dataBusy, dataError, dataStatus, refreshData, syncData } = usePublicData();
   const { aiConfig, updateAiConfig } = useAiConfig();
   const [busy, setBusy] = useState(false);
+  const [compact, setCompact] = useState(false);
 
   const gameState = snapshot?.gameState ?? {};
   const recommendation = snapshot?.recommendation ?? {};
@@ -366,11 +401,15 @@ export default function App() {
   const threats = snapshot?.threats ?? {};
   const activeThreats = useMemo(() => new Set(context.threats ?? []), [context.threats]);
 
+  async function setCompactMode(enabled) {
+    setCompact(enabled);
+    await window.dota2HelpTool?.setCompactMode?.(enabled);
+  }
+
   async function toggleThreat(id) {
     const nextThreats = activeThreats.has(id)
       ? [...activeThreats].filter((key) => key !== id)
       : [...activeThreats, id];
-
     setSnapshot(await postJson("/api/context", { threats: nextThreats }));
   }
 
@@ -383,6 +422,18 @@ export default function App() {
     }
   }
 
+  if (compact) {
+    return (
+      <CompactPanel
+        connected={connected}
+        gameState={gameState}
+        recommendation={recommendation}
+        onExitCompact={() => setCompactMode(false)}
+        onLoadMock={loadMock}
+      />
+    );
+  }
+
   return (
     <main className="app">
       <header className="topbar">
@@ -390,7 +441,13 @@ export default function App() {
           <p className="eyebrow">Dota 2 Help Tool</p>
           <h1>实时装备建议</h1>
         </div>
-        <StatusBadge connected={connected} />
+        <div className="top-actions">
+          <button className="ghost-button compact-toggle" type="button" onClick={() => setCompactMode(true)}>
+            <Minimize2 size={17} />
+            边缘小窗
+          </button>
+          <StatusBadge connected={connected} />
+        </div>
       </header>
 
       <section className="workspace">
@@ -428,7 +485,6 @@ export default function App() {
             <Brain size={18} />
             <h2>{recommendation.title ?? "等待建议"}</h2>
           </div>
-
           <div className="suggestions">
             {(recommendation.suggestions ?? []).map((suggestion) => (
               <article className="suggestion" key={`${suggestion.itemId}-${suggestion.priority}`}>
@@ -440,7 +496,6 @@ export default function App() {
               </article>
             ))}
           </div>
-
           <div className="notes">
             {(recommendation.notes ?? []).map((note) => (
               <p key={note}>{note}</p>
@@ -449,24 +504,9 @@ export default function App() {
         </section>
 
         <div className="right-stack">
-          <SetupPanel
-            setup={setup}
-            setupBusy={setupBusy}
-            setupError={setupError}
-            onInstall={installSetup}
-            onRefresh={refreshSetup}
-          />
-
-          <DataPanel
-            dataBusy={dataBusy}
-            dataError={dataError}
-            dataStatus={dataStatus}
-            onRefresh={refreshData}
-            onSync={syncData}
-          />
-
+          <SetupPanel setup={setup} setupBusy={setupBusy} setupError={setupError} onInstall={installSetup} onRefresh={refreshSetup} />
+          <DataPanel dataBusy={dataBusy} dataError={dataError} dataStatus={dataStatus} onRefresh={refreshData} onSync={syncData} />
           <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
-
           <aside className="panel threat-panel">
             <div className="panel-title">
               <Shield size={18} />
@@ -474,13 +514,7 @@ export default function App() {
             </div>
             <div className="threat-list">
               {Object.entries(threats).map(([id, label]) => (
-                <ThreatToggle
-                  key={id}
-                  id={id}
-                  label={label}
-                  active={activeThreats.has(id)}
-                  onToggle={toggleThreat}
-                />
+                <ThreatToggle key={id} id={id} label={label} active={activeThreats.has(id)} onToggle={toggleThreat} />
               ))}
             </div>
           </aside>

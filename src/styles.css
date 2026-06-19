@@ -39,6 +39,12 @@ button {
   margin: 0 auto 20px;
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: #7c3f36;
@@ -214,6 +220,13 @@ h2 {
   color: #263238;
   background: #fffaf0;
   cursor: pointer;
+}
+
+.compact-toggle {
+  width: auto;
+  min-width: 112px;
+  margin-top: 0;
+  padding: 0 12px;
 }
 
 .icon-button {
@@ -425,6 +438,69 @@ h2 {
   line-height: 1.6;
 }
 
+.compact-app {
+  min-height: 100vh;
+  padding: 14px;
+}
+
+.compact-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.compact-header h1 {
+  font-size: 24px;
+}
+
+.compact-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.compact-stats .stat {
+  min-height: 62px;
+}
+
+.compact-card {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 14px;
+  border: 1px solid #e0d7c9;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.compact-card span {
+  color: #7c3f36;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.compact-card h2 {
+  color: #11191d;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.compact-card p {
+  color: #4a565b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.compact-safety {
+  margin-top: 10px;
+  color: #5c6870;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .threat-list {
   display: grid;
   gap: 8px;
@@ -473,6 +549,12 @@ h2 {
 
   .topbar {
     align-items: start;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    width: 100%;
+    align-items: stretch;
     flex-direction: column;
   }
 

@@ -2,9 +2,7 @@
 
 ## English
 
-### Safety Model
-
-Dota 2 Help Tool is a local-only learning assistant.
+No third-party assistant can honestly guarantee absolute zero account risk, because VAC and security product internals are not public. Dota 2 Help Tool reduces risk by using only local, read-only, public, and user-provided data sources.
 
 Allowed data sources:
 
@@ -22,33 +20,16 @@ The app does not:
 - Modify Dota 2 executable files or core game files.
 - Automate keyboard, mouse, item purchases, spell casts, movement, camera, or macros.
 - Access hidden enemy information or fog-of-war information.
+- Scan Dota 2 processes to auto-detect game launch.
+- Draw inside the game render surface or attach an injected overlay.
 
-### AI Safety
+The edge mini-window is a normal always-on-top Electron window. It is deliberately not transparent click-through, not injected, and not attached to the Dota 2 render pipeline.
 
-AI is optional and disabled by default. The default coach response is generated locally by deterministic rules.
-
-If the user enables AI, the app sends only the current recommendation summary to the endpoint configured by the user. The repository does not include API keys.
-
-The AI system prompt explicitly forbids:
-
-- Cheat development
-- Anti-cheat bypass
-- Memory reading
-- Injection
-- Hooking
-- Packet capture
-- Gameplay automation
-- Hidden-information claims
-
-### Reporting Issues
-
-Please open a GitHub issue for security concerns. Do not attach private Steam account data, API keys, match data, or local filesystem screenshots unless required.
+AI is optional and disabled by default. If the user enables AI, the app sends only the current recommendation summary to the endpoint configured by the user. The repository does not include API keys.
 
 ## 中文
 
-### 安全模型
-
-Dota 2 Help Tool 是一个只在本机运行的学习辅助工具。
+任何第三方辅助工具都不能诚实保证“绝对 0 封号风险”，因为 VAC 和安全软件的内部机制并不公开。Dota 2 Help Tool 通过只使用本地、只读、公开和用户主动提供的数据源来降低风险。
 
 允许的数据来源：
 
@@ -66,24 +47,9 @@ Dota 2 Help Tool 是一个只在本机运行的学习辅助工具。
 - 修改 Dota 2 可执行文件或核心游戏文件。
 - 自动键鼠、自动买装备、自动放技能、自动移动、自动镜头或宏操作。
 - 读取敌方隐藏信息或战争迷雾外信息。
+- 扫描 Dota 2 进程来自动检测游戏启动。
+- 绘制到游戏画面内部或附着注入式 overlay。
 
-### AI 安全
+边缘小窗是普通 Electron 置顶窗口。它刻意不做透明穿透、不注入、不附着 Dota 2 渲染管线。
 
-AI 是可选功能，默认关闭。默认教练解释由本地确定性规则生成。
-
-如果用户开启 AI，应用只会把当前建议摘要发送到用户自己配置的 endpoint。仓库不包含任何 API key。
-
-AI 系统提示明确禁止：
-
-- 外挂开发
-- 绕过反作弊
-- 读取内存
-- 注入
-- Hook
-- 抓包
-- 游戏自动化
-- 声称读取隐藏信息
-
-### 报告问题
-
-如发现安全问题，请在 GitHub 开 issue。除非必要，不要附带 Steam 私人账号信息、API key、比赛隐私数据或本地文件系统截图。
+AI 是可选功能，默认关闭。如果用户开启 AI，应用只会把当前建议摘要发送到用户自己配置的 endpoint。仓库不包含任何 API key。

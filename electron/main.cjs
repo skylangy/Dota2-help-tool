@@ -1,5 +1,5 @@
 const path = require("node:path");
-const { app, BrowserWindow, Menu, shell } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require("electron");
 const { startServer } = require("../server/server.cjs");
 
 let mainWindow;
@@ -16,6 +16,7 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "preload.cjs"),
       sandbox: true
     }
   });
@@ -32,8 +33,32 @@ async function createWindow() {
   }
 }
 
+function setCompactMode(enabled) {
+  if (!mainWindow) return false;
+
+  if (enabled) {
+    const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+    const width = 380;
+    const height = 520;
+    const x = display.workArea.x + display.workArea.width - width - 12;
+    const y = display.workArea.y + Math.round((display.workArea.height - height) / 2);
+    mainWindow.setAlwaysOnTop(true, "normal");
+    mainWindow.setResizable(false);
+    mainWindow.setSize(width, height);
+    mainWindow.setPosition(x, y);
+  } else {
+    mainWindow.setAlwaysOnTop(false);
+    mainWindow.setResizable(true);
+    mainWindow.setSize(1180, 760);
+    mainWindow.center();
+  }
+
+  return true;
+}
+
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
+  ipcMain.handle("window:set-compact-mode", (_event, enabled) => setCompactMode(enabled));
   localServer = await startServer({ silent: false, allowExisting: true });
   await createWindow();
 

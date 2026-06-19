@@ -109,8 +109,15 @@ function publicDataSummary() {
   };
 }
 
+function getHeroProfile(heroId) {
+  const cache = readCache();
+  if (!cache || !heroId) return null;
+  return cache.heroes.find((hero) => hero.name === heroId) ?? null;
+}
+
 module.exports = {
   cacheStatus,
+  getHeroProfile,
   publicDataSummary,
   syncPublicData
 };

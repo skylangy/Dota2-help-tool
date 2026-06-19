@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Added generic recommendation rules for all heroes.
+- Uses synced OpenDota public hero role metadata to choose a generic route when a hero has no dedicated build.
+- Added optional safe edge mini-window as a normal always-on-top desktop window.
+- Clarified that the app does not scan Dota 2 processes and does not draw inside the game render surface.
+
 ## 0.2.0
 
 - Added bilingual English/Chinese README.
