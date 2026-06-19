@@ -28,6 +28,8 @@ The edge mini-window is a normal always-on-top Electron window. It is deliberate
 
 AI is optional and disabled by default. If the user enables AI, the app sends only the current recommendation summary to the endpoint configured by the user. The repository does not include API keys.
 
+Post-match diagnostics are inferred from public OpenDota match statistics only. They cannot identify exact mouse/keyboard mistakes or hidden in-game decisions.
+
 ## 中文
 
 任何第三方辅助工具都不能诚实保证“绝对 0 封号风险”，因为 VAC 和安全软件的内部机制并不公开。Dota 2 Help Tool 通过只使用本地、只读、公开和用户主动提供的数据源来降低风险。
@@ -55,3 +57,5 @@ AI is optional and disabled by default. If the user enables AI, the app sends on
 边缘小窗是普通 Electron 置顶窗口。它刻意不做透明穿透、不注入、不附着 Dota 2 渲染管线。
 
 AI 是可选功能，默认关闭。如果用户开启 AI，应用只会把当前建议摘要发送到用户自己配置的 endpoint。仓库不包含任何 API key。
+
+战后诊断只从 OpenDota 公开比赛统计中推断，不能识别真实鼠标键盘操作错误或隐藏的局内决策。

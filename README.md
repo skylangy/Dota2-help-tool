@@ -16,12 +16,13 @@ Current features:
 - Electron desktop app for Windows.
 - Local GSI receiver at `http://127.0.0.1:3008/gsi`.
 - Real-time hero, time, level, gold, and item display.
+- Automatic next-item recommendation from your current GSI state.
 - Dedicated rules for selected heroes.
 - Generic recommendation rules for all heroes.
 - OpenDota public constants sync for latest hero/item metadata and hero roles.
 - Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, silence, armor need, and dispel need.
 - Manual enemy lineup selection. The app infers tags only from heroes you choose manually.
-- Basic post-match review from a public OpenDota Match ID.
+- Basic post-match review from a public OpenDota Match ID, with local coach diagnostics for deaths, economy, XP, farm, item timing, damage, and objective conversion.
 - Optional edge mini-window. This is a normal always-on-top desktop window, not an injected game overlay.
 - Optional AI coach:
   - Local rule fallback works without AI setup.
@@ -53,6 +54,8 @@ The app only uses:
 - Public OpenDota match data for post-match review.
 
 The edge mini-window is a normal Electron window placed near the screen edge after the user clicks the button. It does not attach to Dota 2, does not modify the game, and does not use an in-game overlay hook.
+
+“Automatic” means the app automatically analyzes read-only GSI data that Dota 2 sends to localhost. It does not automatically inspect the Dota 2 process, screen pixels, memory, packets, or enemy hidden information.
 
 Sources:
 
@@ -108,12 +111,13 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - Windows Electron 桌面应用。
 - 本地 GSI 接收地址：`http://127.0.0.1:3008/gsi`。
 - 实时显示英雄、时间、等级、金钱、已有物品。
+- 根据当前 GSI 状态自动给出下一件装备建议。
 - 部分英雄有专属规则。
 - 所有英雄都有通用推荐规则。
 - 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
 - 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、沉默多、缺护甲、需要驱散等。
 - 手动选择敌方阵容。应用只根据你手动选择的英雄推断局势标签。
-- 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据。
+- 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据，并用本地规则总结死亡、经济、经验、补刀、装备节奏、伤害和推塔转化问题。
 - 可选屏幕边缘小窗。它是普通置顶桌面窗口，不是注入式游戏内 overlay。
 - 可选 AI 教练：
   - 默认不需要 AI，使用本地规则解释。
@@ -145,6 +149,8 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - 用户主动配置的 AI 接口，仅用于解释建议。
 
 边缘小窗是用户点击按钮后移动到屏幕边缘的普通 Electron 窗口。它不附着到 Dota 2，不修改游戏，也不使用游戏内 overlay Hook。
+
+这里的“自动”指自动分析 Dota 2 主动发送到 localhost 的只读 GSI 数据；不代表自动检查 Dota 2 进程、屏幕像素、内存、封包或敌方隐藏信息。
 
 参考来源：
 

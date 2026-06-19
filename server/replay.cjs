@@ -20,8 +20,56 @@ function playerItems(player, itemsById) {
     .map((id) => itemsById.get(id) ?? `Item ${id}`);
 }
 
+function diagnosePlayer(player, durationMinutes) {
+  const issues = [];
+  const deaths = player.deaths ?? 0;
+  const gpm = player.gold_per_min ?? 0;
+  const xpm = player.xp_per_min ?? 0;
+  const lastHits = player.last_hits ?? 0;
+  const heroDamage = player.hero_damage ?? 0;
+  const towerDamage = player.tower_damage ?? 0;
+  const itemCount = [0, 1, 2, 3, 4, 5].filter((slot) => Number(player[`item_${slot}`]) > 0).length;
+
+  if (deaths >= 10) {
+    issues.push("死亡偏多，优先复盘站位、视野和保命装时机。");
+  } else if (deaths >= 7) {
+    issues.push("死亡略高，团战前需要更注意先手范围和撤退路线。");
+  }
+
+  if (durationMinutes >= 20 && gpm < 350 && player.lane_role !== 5) {
+    issues.push("经济偏低，可能需要更早补刷钱装、减少无收益游走或提高补刀效率。");
+  }
+
+  if (durationMinutes >= 20 && xpm < 450) {
+    issues.push("经验偏低，注意不要长时间离线或在低收益区域停留。");
+  }
+
+  if (durationMinutes >= 25 && lastHits < 120 && player.lane_role !== 5) {
+    issues.push("补刀/刷钱量偏低，核心位需要规划安全线和野区循环。");
+  }
+
+  if (durationMinutes >= 25 && itemCount <= 3) {
+    issues.push("装备成型较慢，建议复盘关键装备是否延迟。");
+  }
+
+  if (heroDamage < 10000 && durationMinutes >= 30 && player.lane_role !== 5) {
+    issues.push("英雄伤害偏低，可能参团时机或输出环境不足。");
+  }
+
+  if (towerDamage < 1000 && player.win && durationMinutes >= 30 && player.lane_role !== 5) {
+    issues.push("推塔参与偏少，赢团后可以更主动转化为防御塔和地图资源。");
+  }
+
+  if (issues.length === 0) {
+    issues.push("主要指标没有明显异常，可以重点复盘关键团战和装备选择细节。");
+  }
+
+  return issues.slice(0, 3);
+}
+
 function summarizeMatch(match) {
   const { heroesById, itemsById } = buildLookups();
+  const durationMinutes = Math.max(1, (match.duration ?? 0) / 60);
   const players = (match.players ?? []).map((player) => {
     const kills = player.kills ?? 0;
     const deaths = player.deaths ?? 0;
@@ -33,17 +81,22 @@ function summarizeMatch(match) {
       isRadiant: Boolean(player.isRadiant),
       won: Boolean(player.win),
       kda: `${kills}/${deaths}/${assists}`,
+      kills,
+      deaths,
+      assists,
       gpm: player.gold_per_min ?? 0,
       xpm: player.xp_per_min ?? 0,
       lastHits: player.last_hits ?? 0,
       heroDamage: player.hero_damage ?? 0,
       towerDamage: player.tower_damage ?? 0,
-      items: playerItems(player, itemsById)
+      items: playerItems(player, itemsById),
+      issues: diagnosePlayer(player, durationMinutes)
     };
   });
 
   const sortedByGpm = [...players].sort((a, b) => b.gpm - a.gpm);
   const sortedByDamage = [...players].sort((a, b) => b.heroDamage - a.heroDamage);
+  const mostDeaths = [...players].sort((a, b) => b.deaths - a.deaths)[0];
 
   return {
     matchId: match.match_id,
@@ -55,7 +108,12 @@ function summarizeMatch(match) {
     highlights: [
       sortedByGpm[0] ? `最高 GPM：${sortedByGpm[0].heroName} ${sortedByGpm[0].gpm}` : "暂无经济数据。",
       sortedByDamage[0] ? `最高英雄伤害：${sortedByDamage[0].heroName} ${sortedByDamage[0].heroDamage}` : "暂无伤害数据。",
-      "复盘数据来自 OpenDota 公开 API，仅用于战后学习。"
+      mostDeaths ? `死亡最多：${mostDeaths.heroName} ${mostDeaths.deaths} 次，建议重点复盘站位和保命装。` : "暂无死亡数据。"
+    ],
+    coachSummary: [
+      "复盘结论基于 OpenDota 公开赛后统计，只能指出经济、死亡、输出、推塔和装备节奏问题。",
+      "它不能判断真实鼠标键盘操作，也不会读取录像内部或游戏进程。",
+      "建议先选择你的英雄行，重点看该英雄的 1-3 条问题。"
     ]
   };
 }
@@ -69,7 +127,7 @@ async function fetchMatch(matchId) {
 
   const response = await fetch(`https://api.opendota.com/api/matches/${matchId}`, {
     headers: {
-      "User-Agent": "Dota2HelpTool/0.4.0"
+      "User-Agent": "Dota2HelpTool/0.5.0"
     }
   });
 

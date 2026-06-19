@@ -552,9 +552,9 @@ h2 {
 
 .player-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 8px;
-  align-items: center;
+  align-items: start;
   padding: 8px;
   border-radius: 8px;
   background: #f7f5f0;
@@ -568,6 +568,13 @@ h2 {
 
 .player-row strong {
   color: #172126;
+}
+
+.player-row p {
+  margin-top: 4px;
+  color: #5c6870;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .compact-app {
@@ -624,6 +631,28 @@ h2 {
   color: #4a565b;
   font-size: 14px;
   line-height: 1.55;
+}
+
+.compact-alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 0 10px;
+}
+
+.compact-alternatives span {
+  color: #7b6d63;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.compact-alternatives p {
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: #233238;
+  background: #ece3d4;
+  font-size: 12px;
 }
 
 .compact-safety {

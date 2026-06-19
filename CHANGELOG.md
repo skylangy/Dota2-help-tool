@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Refined compact mode to focus on the next item and small alternatives.
+- Added local post-match coach diagnostics from OpenDota stats.
+- Replay summaries now flag deaths, economy, XP, farm, item timing, damage, and objective conversion issues.
+- Clarified that post-match diagnostics infer only from public stats, not actual input/micro decisions.
+
 ## 0.4.0
 
 - Expanded dedicated hero build rules for common beginner heroes.

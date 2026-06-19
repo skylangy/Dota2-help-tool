@@ -474,10 +474,17 @@ function ReplayPanel() {
             <span>亮点</span>
             {replay.highlights.map((line) => <p key={line}>{line}</p>)}
           </div>
+          <div className="inferred-tags">
+            <span>教练总结</span>
+            {replay.coachSummary.map((line) => <p key={line}>{line}</p>)}
+          </div>
           <div className="player-table">
             {replay.players.map((player) => (
               <div className={player.won ? "player-row won" : "player-row"} key={`${player.heroId}-${player.accountId ?? player.heroName}`}>
-                <strong>{player.heroName}</strong>
+                <div>
+                  <strong>{player.heroName}</strong>
+                  <p>{player.issues.join(" ")}</p>
+                </div>
                 <span>{player.kda}</span>
                 <span>{player.gpm} GPM</span>
               </div>
@@ -491,6 +498,7 @@ function ReplayPanel() {
 
 function CompactPanel({ connected, gameState, recommendation, onExitCompact, onLoadMock }) {
   const first = recommendation.suggestions?.[0];
+  const alternatives = (recommendation.suggestions ?? []).slice(1, 3);
 
   return (
     <main className="app compact-app">
@@ -513,6 +521,14 @@ function CompactPanel({ connected, gameState, recommendation, onExitCompact, onL
         <h2>{first?.itemName ?? recommendation.title ?? "等待 Dota 2 GSI 数据"}</h2>
         <p>{first?.reason ?? recommendation.notes?.[0] ?? "进入比赛后显示建议。"}</p>
       </section>
+      {alternatives.length > 0 ? (
+        <div className="compact-alternatives">
+          <span>备选</span>
+          {alternatives.map((item) => (
+            <p key={item.itemId}>{item.itemName}</p>
+          ))}
+        </div>
+      ) : null}
       <button className="ghost-button" type="button" onClick={onLoadMock}>
         <Play size={17} />
         演示状态
