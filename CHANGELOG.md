@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+- Added a launch-test checklist for local service, GSI config, public data cache, and live GSI data.
+- Added quick actions for GSI install, public data sync, demo state, and compact window.
+- Improved first-run testing flow for real Dota 2 sessions.
+
 ## 0.5.0
 
 - Refined compact mode to focus on the next item and small alternatives.

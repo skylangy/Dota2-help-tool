@@ -218,6 +218,58 @@ function StatusBadge({ connected }) {
   );
 }
 
+function ChecklistItem({ done, label }) {
+  return (
+    <div className={done ? "check-item done" : "check-item"}>
+      {done ? <Check size={16} /> : <CircleAlert size={16} />}
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function LaunchChecklist({ connected, dataStatus, gameState, onCompact, onInstall, onMock, onSync, setup, setupBusy, dataBusy }) {
+  const hasLiveData = Boolean(gameState?.receivedAt);
+  const readyCount = [
+    connected,
+    setup?.installed,
+    dataStatus?.hasCache,
+    hasLiveData
+  ].filter(Boolean).length;
+
+  return (
+    <section className="launch-checklist">
+      <div>
+        <p className="eyebrow">Launch Test</p>
+        <h2>上线测试清单 {readyCount}/4</h2>
+      </div>
+      <div className="check-grid">
+        <ChecklistItem done={connected} label="本地服务连接" />
+        <ChecklistItem done={Boolean(setup?.installed)} label="GSI 配置" />
+        <ChecklistItem done={Boolean(dataStatus?.hasCache)} label="公开数据缓存" />
+        <ChecklistItem done={hasLiveData} label="收到实时 GSI 数据" />
+      </div>
+      <div className="check-actions">
+        <button className="ghost-button compact-toggle" type="button" onClick={onInstall} disabled={setupBusy}>
+          {setupBusy ? <RefreshCw className="spin" size={17} /> : <FolderCheck size={17} />}
+          安装 GSI
+        </button>
+        <button className="ghost-button compact-toggle" type="button" onClick={onSync} disabled={dataBusy}>
+          {dataBusy ? <RefreshCw className="spin" size={17} /> : <Cloud size={17} />}
+          同步数据
+        </button>
+        <button className="ghost-button compact-toggle" type="button" onClick={onMock}>
+          <Play size={17} />
+          演示
+        </button>
+        <button className="ghost-button compact-toggle" type="button" onClick={onCompact}>
+          <Minimize2 size={17} />
+          小窗
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function Stat({ label, value }) {
   return (
     <div className="stat">
@@ -607,6 +659,22 @@ export default function App() {
           <StatusBadge connected={connected} />
         </div>
       </header>
+
+      <LaunchChecklist
+        connected={connected}
+        dataBusy={dataBusy}
+        dataStatus={dataStatus}
+        gameState={gameState}
+        onCompact={() => setCompactMode(true)}
+        onInstall={installSetup}
+        onMock={loadMock}
+        onSync={async () => {
+          await syncData();
+          await refreshHeroes();
+        }}
+        setup={setup}
+        setupBusy={setupBusy}
+      />
 
       <section className="workspace">
         <aside className="panel state-panel">

@@ -28,6 +28,7 @@ Current features:
   - Local rule fallback works without AI setup.
   - Optional Ollama local model support.
   - Optional OpenAI-compatible endpoint support if the user provides their own endpoint and key.
+- Launch-test checklist with quick actions for GSI install, public data sync, demo state, and compact window.
 
 ### Safety Boundary
 
@@ -68,18 +69,19 @@ Sources:
 
 1. Download the Windows installer or zip from GitHub Releases.
 2. Open the app.
-3. Click `Install GSI Config`.
-4. In Steam, open Dota 2 Properties and add this launch option:
+3. Use the launch-test checklist at the top of the app.
+4. Click `Install GSI`.
+5. In Steam, open Dota 2 Properties and add this launch option:
 
 ```text
 -gamestateintegration
 ```
 
-5. Start Dota 2 and enter a match.
-6. Optional: click `Sync Public Data` so generic rules can use latest OpenDota hero role metadata.
-7. Optional: manually choose enemy heroes to infer match-context tags.
-8. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
-9. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
+6. Click `Sync Data`.
+7. Start Dota 2 and enter a match.
+8. Optional: manually choose enemy heroes to infer match-context tags.
+9. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
+10. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
 
 ### Developer Setup
 
@@ -123,6 +125,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
   - 默认不需要 AI，使用本地规则解释。
   - 可选本地 Ollama 模型。
   - 可选 OpenAI-compatible 接口，由用户自己填写 endpoint 和 key。
+- 上线测试清单：快速检查本地服务、GSI 配置、公开数据缓存和实时 GSI 数据。
 
 ### 安全边界
 
@@ -163,18 +166,19 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 
 1. 从 GitHub Releases 下载 Windows 安装包或 zip。
 2. 打开应用。
-3. 点击 `安装 GSI 配置`。
-4. 在 Steam 的 Dota 2 启动项里加入：
+3. 先看应用顶部的上线测试清单。
+4. 点击 `安装 GSI`。
+5. 在 Steam 的 Dota 2 启动项里加入：
 
 ```text
 -gamestateintegration
 ```
 
-5. 启动 Dota 2 并进入比赛。
-6. 可选：点击 `同步公开数据`，让通用规则使用 OpenDota 最新英雄角色数据。
-7. 可选：手动选择敌方英雄，让工具推断局势标签。
-8. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
-9. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
+6. 点击 `同步数据`。
+7. 启动 Dota 2 并进入比赛。
+8. 可选：手动选择敌方英雄，让工具推断局势标签。
+9. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
+10. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
 
 ### 开发
 
