@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Added an in-app safety diagnostics panel for setup, public data, live GSI, and recommendation health.
+- Added `/api/diagnostics` for transparent launch-test and safety-boundary reporting.
+- Allowed localhost development origins on alternate Vite ports so first-run testing still works when `5173` is occupied.
+- Extended self-test coverage for diagnostics and safety capability boundaries.
+
 ## 0.6.0
 
 - Added a launch-test checklist for local service, GSI config, public data cache, and live GSI data.

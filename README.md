@@ -29,6 +29,7 @@ Current features:
   - Optional Ollama local model support.
   - Optional OpenAI-compatible endpoint support if the user provides their own endpoint and key.
 - Launch-test checklist with quick actions for GSI install, public data sync, demo state, and compact window.
+- Safety diagnostics panel that reports local setup, public data cache, live GSI status, recommendation health, and the explicit non-cheat capability boundary.
 
 ### Safety Boundary
 
@@ -82,6 +83,7 @@ Sources:
 8. Optional: manually choose enemy heroes to infer match-context tags.
 9. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
 10. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
+11. Optional: open `Safety Diagnostics` to verify what the app is using and what it deliberately does not do.
 
 ### Developer Setup
 
@@ -126,6 +128,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
   - 可选本地 Ollama 模型。
   - 可选 OpenAI-compatible 接口，由用户自己填写 endpoint 和 key。
 - 上线测试清单：快速检查本地服务、GSI 配置、公开数据缓存和实时 GSI 数据。
+- 安全诊断面板：显示本机配置、公开数据缓存、实时 GSI、推荐引擎状态，以及明确不包含的外挂式能力边界。
 
 ### 安全边界
 
@@ -179,6 +182,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 8. 可选：手动选择敌方英雄，让工具推断局势标签。
 9. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
 10. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
+11. 可选：查看 `安全诊断`，确认应用正在使用什么数据，以及它明确不会做什么。
 
 ### 开发
 

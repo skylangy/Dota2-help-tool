@@ -151,6 +151,36 @@ h2 {
   gap: 8px;
 }
 
+.diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.diagnostic-section {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7f5f0;
+}
+
+.diagnostic-section span {
+  color: #7c3f36;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.diagnostic-section p {
+  color: #36464c;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .panel {
   border: 1px solid rgba(38, 45, 48, 0.12);
   border-radius: 8px;
@@ -161,6 +191,7 @@ h2 {
 .state-panel,
 .threat-panel,
 .setup-panel,
+.diagnostics-panel,
 .ai-panel,
 .lineup-panel,
 .replay-panel,

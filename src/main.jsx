@@ -165,6 +165,30 @@ function usePublicData() {
   return { dataBusy, dataError, dataStatus, refreshData, syncData };
 }
 
+function useDiagnostics() {
+  const [diagnostics, setDiagnostics] = useState(null);
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false);
+  const [diagnosticsError, setDiagnosticsError] = useState("");
+
+  async function refreshDiagnostics() {
+    setDiagnosticsBusy(true);
+    setDiagnosticsError("");
+    try {
+      setDiagnostics(await requestJson("/api/diagnostics"));
+    } catch (error) {
+      setDiagnosticsError(error.message);
+    } finally {
+      setDiagnosticsBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshDiagnostics();
+  }, []);
+
+  return { diagnostics, diagnosticsBusy, diagnosticsError, refreshDiagnostics };
+}
+
 function useHeroCatalog() {
   const [heroes, setHeroes] = useState([]);
   const [heroError, setHeroError] = useState("");
@@ -412,6 +436,47 @@ function DataPanel({ dataBusy, dataError, dataStatus, onRefresh, onSync }) {
   );
 }
 
+function DiagnosticsPanel({ diagnostics, diagnosticsBusy, diagnosticsError, onRefresh }) {
+  const updatedAt = diagnostics?.generatedAt ? new Date(diagnostics.generatedAt).toLocaleString() : "等待诊断";
+  const statusItems = [
+    { done: Boolean(diagnostics?.setup?.installed), label: "GSI 配置" },
+    { done: Boolean(diagnostics?.publicData?.hasCache), label: "公开数据" },
+    { done: Boolean(diagnostics?.app?.liveGsiReceived), label: "实时 GSI" },
+    { done: diagnostics?.app?.recommendationStatus !== "error", label: "推荐引擎" }
+  ];
+
+  return (
+    <aside className="panel diagnostics-panel">
+      <div className="panel-title">
+        <Shield size={18} />
+        <h2>安全诊断</h2>
+      </div>
+      <p className="setup-copy">
+        一键查看本机接入状态和安全边界。此报告不读取进程、内存、网络封包或游戏画面。
+      </p>
+      <div className="diagnostic-grid">
+        {statusItems.map((item) => (
+          <ChecklistItem done={item.done} label={item.label} key={item.label} />
+        ))}
+      </div>
+      <div className="diagnostic-section">
+        <span>允许的数据来源</span>
+        {(diagnostics?.safety?.dataSources ?? []).map((line) => <p key={line}>{line}</p>)}
+      </div>
+      <div className="diagnostic-section">
+        <span>明确不包含</span>
+        {(diagnostics?.safety?.forbiddenCapabilities ?? []).map((line) => <p key={line}>{line}</p>)}
+      </div>
+      <code className="path-line">{updatedAt}</code>
+      {diagnosticsError ? <p className="setup-error">{diagnosticsError}</p> : null}
+      <button className="ghost-button" type="button" onClick={onRefresh} disabled={diagnosticsBusy}>
+        {diagnosticsBusy ? <RefreshCw className="spin" size={17} /> : <Shield size={17} />}
+        刷新诊断
+      </button>
+    </aside>
+  );
+}
+
 function AiPanel({ aiConfig, onConfigChange }) {
   const [coachText, setCoachText] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -594,6 +659,7 @@ export default function App() {
   const { connected, setSnapshot, snapshot } = useLiveSnapshot();
   const { installSetup, refreshSetup, setup, setupBusy, setupError } = useSetupStatus();
   const { dataBusy, dataError, dataStatus, refreshData, syncData } = usePublicData();
+  const { diagnostics, diagnosticsBusy, diagnosticsError, refreshDiagnostics } = useDiagnostics();
   const { heroes, heroError, refreshHeroes } = useHeroCatalog();
   const { aiConfig, updateAiConfig } = useAiConfig();
   const [busy, setBusy] = useState(false);
@@ -740,6 +806,12 @@ export default function App() {
               await syncData();
               await refreshHeroes();
             }}
+          />
+          <DiagnosticsPanel
+            diagnostics={diagnostics}
+            diagnosticsBusy={diagnosticsBusy}
+            diagnosticsError={diagnosticsError}
+            onRefresh={refreshDiagnostics}
           />
           <EnemyLineupPanel
             activeEnemyHeroes={activeEnemyHeroes}

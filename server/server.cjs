@@ -19,6 +19,19 @@ const ALLOWED_ORIGINS = new Set([
   "null"
 ]);
 
+function isAllowedOrigin(origin) {
+  if (!origin || ALLOWED_ORIGINS.has(origin)) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(origin);
+    return parsed.protocol === "http:" && ["127.0.0.1", "localhost"].includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function createState() {
   return {
     gameState: {
@@ -33,6 +46,50 @@ function createState() {
       enemyHeroes: [],
       manualThreats: [],
       threats: []
+    }
+  };
+}
+
+function diagnosticsSnapshot(state) {
+  const setup = scanSetup();
+  const data = publicDataSummary();
+  return {
+    generatedAt: new Date().toISOString(),
+    app: {
+      host: DEFAULT_HOST,
+      port: DEFAULT_PORT,
+      gsiEndpoint: `http://${DEFAULT_HOST}:${DEFAULT_PORT}/gsi`,
+      liveGsiReceived: Boolean(state.gameState.receivedAt),
+      recommendationStatus: recommend(state.gameState, state.context).status
+    },
+    setup: {
+      installed: setup.installed,
+      installedTargets: setup.installedTargets ?? [],
+      dotaConfigDirs: setup.dotaConfigDirs ?? []
+    },
+    publicData: {
+      hasCache: data.hasCache,
+      heroCount: data.heroCount,
+      itemCount: data.itemCount,
+      generatedAt: data.generatedAt
+    },
+    safety: {
+      dataSources: [
+        "Dota 2 Game State Integration JSON sent to localhost",
+        "Manual user-selected enemy lineup and context tags",
+        "Public OpenDota constants and public match data",
+        "Optional user-configured AI endpoint for explanation only"
+      ],
+      forbiddenCapabilities: [
+        "No memory reading",
+        "No DLL injection",
+        "No DirectX/Vulkan/Steam/Dota hooks",
+        "No packet capture",
+        "No input automation or macros",
+        "No hidden enemy or fog-of-war information",
+        "No Dota 2 process scanning",
+        "No injected in-game overlay"
+      ]
     }
   };
 }
@@ -63,7 +120,7 @@ function createApp() {
 
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || ALLOWED_ORIGINS.has(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
@@ -78,6 +135,10 @@ function createApp() {
 
   app.get("/api/state", (_req, res) => {
     res.json(snapshot());
+  });
+
+  app.get("/api/diagnostics", (_req, res) => {
+    res.json(diagnosticsSnapshot(state));
   });
 
   app.post("/api/context", (req, res) => {
@@ -223,5 +284,6 @@ if (require.main === module) {
 
 module.exports = {
   createApp,
+  diagnosticsSnapshot,
   startServer
 };
