@@ -19,9 +19,11 @@ Current features:
 - Automatic next-item recommendation from your current GSI state.
 - Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data.
 - GSI data inspector showing which requested blocks were actually received, including `buildings` when available.
+- Dark esports command-center UI with item and hero images from the latest synced OpenDota constants.
 - Dedicated rules for selected heroes.
 - Generic recommendation rules for all heroes.
 - OpenDota public constants sync for latest hero/item metadata and hero roles.
+- OpenDota image paths are synced with public constants and loaded from the Steam CDN, with text fallbacks if an image is unavailable.
 - Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, silence, armor need, and dispel need.
 - Manual enemy lineup selection remains available as a fallback when GSI does not provide both-team lineup data.
 - Basic post-match review from a public OpenDota Match ID, with local coach diagnostics for deaths, economy, XP, farm, item timing, damage, and objective conversion.
@@ -130,9 +132,11 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - 根据当前 GSI 状态自动给出下一件装备建议。
 - 当 Dota 2 GSI 提供 `allplayers` 数据时，自动识别敌方阵容并推断局势标签。
 - GSI 数据检查器：显示本局实际收到了哪些 GSI 数据块，包括可用时的 `buildings`。
+- 暗色电竞指挥台 UI，装备和英雄图片来自最新同步的 OpenDota 公开常量。
 - 部分英雄有专属规则。
 - 所有英雄都有通用推荐规则。
 - 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
+- 图片路径随 OpenDota 公开常量同步，并从 Steam CDN 加载；如果图片不可用，会自动回退为文字占位。
 - 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、沉默多、缺护甲、需要驱散等。
 - 仍然保留手动选择敌方阵容；当 GSI 没有提供双方阵容时作为兜底。
 - 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据，并用本地规则总结死亡、经济、经验、补刀、装备节奏、伤害和推塔转化问题。

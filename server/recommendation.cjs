@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { getHeroProfile } = require("./public-data.cjs");
+const { getHeroProfile, getItemProfile } = require("./public-data.cjs");
 
 const rootDir = path.resolve(__dirname, "..");
 const items = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "items.json"), "utf8"));
@@ -110,6 +110,16 @@ function itemName(itemId) {
   return items[itemId]?.name ?? itemId.replace(/^item_/, "");
 }
 
+function cdnUrl(pathname) {
+  if (!pathname) return null;
+  return pathname.startsWith("http") ? pathname : `https://cdn.cloudflare.steamstatic.com${pathname}`;
+}
+
+function itemImage(itemId) {
+  const publicItem = getItemProfile(itemId);
+  return cdnUrl(publicItem?.img);
+}
+
 function normalizeInventory(rawItems = []) {
   return rawItems.filter(Boolean).map((item) => item.replace(/^item_/, "item_"));
 }
@@ -169,6 +179,7 @@ function buildSuggestion(itemId, priority, reason) {
   return {
     itemId,
     itemName: itemName(itemId),
+    imageUrl: itemImage(itemId),
     priority,
     reason
   };

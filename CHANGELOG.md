@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0
+
+- Redesigned the main UI into a dark esports command-center layout.
+- Added item and hero images from the latest synced OpenDota constants and Steam CDN paths.
+- Added graceful image fallbacks so missing CDN images do not break recommendations.
+- Improved compact window item presentation.
+- Added retry handling for transient OpenDota sync errors such as 521/522.
+
 ## 0.9.0
 
 - Added `buildings` to the generated GSI config.

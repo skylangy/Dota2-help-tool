@@ -37,7 +37,9 @@ function summarizePayload(heroes, items) {
     localizedName: hero.localized_name,
     roles: hero.roles ?? [],
     attackType: hero.attack_type,
-    primaryAttr: hero.primary_attr
+    primaryAttr: hero.primary_attr,
+    img: hero.img ?? null,
+    icon: hero.icon ?? null
   }));
 
   const itemList = Object.entries(items)
@@ -49,7 +51,8 @@ function summarizePayload(heroes, items) {
       cost: item.cost ?? 0,
       behavior: item.behavior ?? null,
       created: Boolean(item.created),
-      tier: item.tier ?? null
+      tier: item.tier ?? null,
+      img: item.img ?? null
     }));
 
   return {
@@ -74,18 +77,33 @@ function cacheStatus() {
   };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Dota2HelpTool/0.2.0"
-    }
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
   });
+}
 
-  if (!response.ok) {
-    throw new Error(`OpenDota request failed: ${response.status}`);
+async function fetchJson(url) {
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Dota2HelpTool/0.10.0"
+      }
+    });
+
+    if (response.ok) {
+      return response.json();
+    }
+
+    lastStatus = response.status;
+    if (![429, 500, 502, 503, 520, 521, 522, 524].includes(response.status)) {
+      break;
+    }
+    await wait(600 * (attempt + 1));
   }
 
-  return response.json();
+  throw new Error(`OpenDota request failed: ${lastStatus}`);
 }
 
 async function syncPublicData() {
@@ -115,6 +133,13 @@ function getHeroProfile(heroId) {
   return cache.heroes.find((hero) => hero.name === heroId) ?? null;
 }
 
+function getItemProfile(itemId) {
+  const cache = readCache();
+  if (!cache || !itemId) return null;
+  const normalized = itemId.replace(/^item_/, "");
+  return cache.items.find((item) => item.key === normalized || `item_${item.key}` === itemId) ?? null;
+}
+
 function heroCatalog() {
   const cache = readCache();
   if (!cache) {
@@ -127,7 +152,9 @@ function heroCatalog() {
       name: hero.localizedName,
       roles: hero.roles,
       attackType: hero.attackType,
-      primaryAttr: hero.primaryAttr
+      primaryAttr: hero.primaryAttr,
+      img: hero.img,
+      icon: hero.icon
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -139,6 +166,7 @@ function getPublicDataCache() {
 module.exports = {
   cacheStatus,
   getHeroProfile,
+  getItemProfile,
   getPublicDataCache,
   heroCatalog,
   publicDataSummary,

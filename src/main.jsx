@@ -36,6 +36,29 @@ const priorityLabels = {
   low: "观察"
 };
 
+const STEAM_CDN = "https://cdn.cloudflare.steamstatic.com";
+
+function assetUrl(pathname) {
+  if (!pathname) return "";
+  return pathname.startsWith("http") ? pathname : `${STEAM_CDN}${pathname}`;
+}
+
+function itemImageFromId(itemId = "") {
+  const key = itemId.replace(/^item_/, "");
+  return key ? `${STEAM_CDN}/apps/dota2/images/dota_react/items/${key}.png` : "";
+}
+
+function abbrev(label = "?") {
+  return label
+    .replace(/^npc_dota_hero_/, "")
+    .replace(/^item_/, "")
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
+}
+
 function formatTime(seconds = 0) {
   const safeSeconds = Math.max(0, Number(seconds) || 0);
   const minutes = Math.floor(safeSeconds / 60);
@@ -303,6 +326,19 @@ function Stat({ label, value }) {
   );
 }
 
+function GameIcon({ alt, className = "", fallback, src }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return <span className={`game-icon fallback ${className}`}>{fallback ?? abbrev(alt)}</span>;
+  }
+
+  return <img className={`game-icon ${className}`} src={src} alt={alt} onError={() => setFailed(true)} />;
+}
+
+function heroById(heroes, heroId) {
+  return heroes.find((hero) => hero.id === heroId);
+}
+
 function ThreatToggle({ id, label, active, onToggle }) {
   return (
     <button className={active ? "threat active" : "threat"} type="button" onClick={() => onToggle(id)}>
@@ -349,6 +385,18 @@ function EnemyLineupPanel({ activeEnemyHeroes, enemyHeroesSource, gameLineups, h
         <span>{sourceLabel}</span>
         <p>{lineupSource}</p>
       </div>
+      <div className="lineup-strip">
+        {activeEnemyHeroes.length > 0 ? activeEnemyHeroes.map((heroId) => {
+          const hero = heroById(heroes, heroId);
+          const heroName = hero?.name ?? heroId.replace("npc_dota_hero_", "");
+          return (
+            <div className="lineup-token" key={heroId} title={heroName}>
+              <GameIcon alt={heroName} fallback={abbrev(heroName)} src={assetUrl(hero?.icon ?? hero?.img)} />
+              <span>{heroName}</span>
+            </div>
+          );
+        }) : <p className="empty-gsi">等待 GSI 或手动选择敌方英雄</p>}
+      </div>
       <input
         className="search-input"
         placeholder="搜索英雄，先同步公开数据"
@@ -368,6 +416,7 @@ function EnemyLineupPanel({ activeEnemyHeroes, enemyHeroesSource, gameLineups, h
             type="button"
             onClick={() => toggleHero(hero.id)}
           >
+            <GameIcon alt={hero.name} fallback={abbrev(hero.name)} src={assetUrl(hero.icon ?? hero.img)} />
             {hero.name}
           </button>
         ))}
@@ -682,6 +731,7 @@ function CompactPanel({ connected, gameState, recommendation, onExitCompact, onL
         <Stat label="金钱" value={gameState.gold ?? 0} />
       </div>
       <section className="compact-card">
+        <GameIcon alt={first?.itemName ?? "item"} className="compact-item-art" fallback={abbrev(first?.itemName)} src={first?.imageUrl || itemImageFromId(first?.itemId)} />
         <span>{first ? priorityLabels[first.priority] : "等待"}</span>
         <h2>{first?.itemName ?? recommendation.title ?? "等待 Dota 2 GSI 数据"}</h2>
         <p>{first?.reason ?? recommendation.notes?.[0] ?? "进入比赛后显示建议。"}</p>
@@ -811,7 +861,12 @@ export default function App() {
             <span>已检测物品</span>
             <div>
               {(gameState.items?.length ?? 0) > 0
-                ? gameState.items.map((item) => <code key={item}>{item.replace("item_", "")}</code>)
+                ? gameState.items.map((item) => (
+                  <code className="inventory-item" key={item}>
+                    <GameIcon alt={item} fallback={abbrev(item)} src={itemImageFromId(item)} />
+                    {item.replace("item_", "")}
+                  </code>
+                ))
                 : <em>暂无物品数据</em>}
             </div>
           </div>
@@ -829,11 +884,14 @@ export default function App() {
           <div className="suggestions">
             {(recommendation.suggestions ?? []).map((suggestion) => (
               <article className="suggestion" key={`${suggestion.itemId}-${suggestion.priority}`}>
-                <div>
-                  <span className={`priority ${suggestion.priority}`}>{priorityLabels[suggestion.priority]}</span>
-                  <h3>{suggestion.itemName}</h3>
+                <GameIcon alt={suggestion.itemName} className="item-art" fallback={abbrev(suggestion.itemName)} src={suggestion.imageUrl || itemImageFromId(suggestion.itemId)} />
+                <div className="suggestion-body">
+                  <div className="suggestion-heading">
+                    <span className={`priority ${suggestion.priority}`}>{priorityLabels[suggestion.priority]}</span>
+                    <h3>{suggestion.itemName}</h3>
+                  </div>
+                  <p>{suggestion.reason}</p>
                 </div>
-                <p>{suggestion.reason}</p>
               </article>
             ))}
           </div>
