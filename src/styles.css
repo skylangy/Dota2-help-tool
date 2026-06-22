@@ -89,6 +89,7 @@ h2 {
 
 .status,
 .ghost-button,
+.primary-button,
 .icon-button,
 .text-button {
   border: 1px solid rgba(148, 174, 172, 0.18);
@@ -115,6 +116,7 @@ h2 {
 }
 
 .ghost-button,
+.primary-button,
 .icon-button {
   min-height: 38px;
   display: inline-flex;
@@ -131,19 +133,34 @@ h2 {
   padding: 8px 12px;
 }
 
+.primary-button {
+  padding: 8px 14px;
+  color: #07100f;
+  border-color: rgba(141, 240, 200, 0.6);
+  background: linear-gradient(180deg, #8df0c8, #42be91);
+  box-shadow: 0 0 0 1px rgba(141, 240, 200, 0.08), 0 10px 30px rgba(66, 190, 145, 0.18);
+}
+
 .icon-button {
   width: 38px;
   padding: 0;
 }
 
 .ghost-button:hover,
+.primary-button:hover,
 .icon-button:hover,
 .text-button:hover {
   border-color: rgba(222, 87, 74, 0.55);
+}
+
+.ghost-button:hover,
+.icon-button:hover,
+.text-button:hover {
   color: #fff;
 }
 
 .ghost-button:disabled,
+.primary-button:disabled,
 .icon-button:disabled {
   opacity: 0.55;
   cursor: default;
@@ -169,6 +186,13 @@ h2 {
 
 .launch-checklist h2 {
   font-size: 18px;
+}
+
+.quick-message {
+  max-width: 360px;
+  color: #90a19f;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .check-grid,
@@ -223,6 +247,50 @@ h2 {
 .right-stack {
   display: grid;
   gap: 14px;
+}
+
+.utility-drawer {
+  padding: 0;
+  overflow: hidden;
+}
+
+.utility-drawer summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 16px;
+  color: #edf3f2;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 900;
+  list-style: none;
+}
+
+.utility-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.utility-drawer summary::after {
+  content: "+";
+  margin-left: auto;
+  color: #7bd5c1;
+  font-size: 18px;
+}
+
+.utility-drawer[open] summary::after {
+  content: "-";
+}
+
+.drawer-stack {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.drawer-stack > .panel {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .panel-title {

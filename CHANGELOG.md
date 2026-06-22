@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+
+- Added a one-click preparation action for GSI setup, public data sync, and status refresh.
+- Simplified the first screen so core live recommendation, state, lineup, and threats are prominent.
+- Moved diagnostics, GSI inspection, replay, and AI coach panels into collapsible utility sections.
+- Kept all safety boundaries unchanged while improving first-run player usability.
+
 ## 0.10.0
 
 - Redesigned the main UI into a dark esports command-center layout.

@@ -274,7 +274,21 @@ function ChecklistItem({ done, label }) {
   );
 }
 
-function LaunchChecklist({ connected, dataStatus, gameState, onCompact, onInstall, onMock, onSync, setup, setupBusy, dataBusy }) {
+function LaunchChecklist({
+  connected,
+  dataStatus,
+  gameState,
+  onCompact,
+  onInstall,
+  onMock,
+  onPrepare,
+  onSync,
+  prepareBusy,
+  prepareMessage,
+  setup,
+  setupBusy,
+  dataBusy
+}) {
   const hasLiveData = Boolean(gameState?.receivedAt);
   const readyCount = [
     connected,
@@ -286,8 +300,9 @@ function LaunchChecklist({ connected, dataStatus, gameState, onCompact, onInstal
   return (
     <section className="launch-checklist">
       <div>
-        <p className="eyebrow">Launch Test</p>
+        <p className="eyebrow">Quick Start</p>
         <h2>上线测试清单 {readyCount}/4</h2>
+        {prepareMessage ? <p className="quick-message">{prepareMessage}</p> : null}
       </div>
       <div className="check-grid">
         <ChecklistItem done={connected} label="本地服务连接" />
@@ -296,6 +311,10 @@ function LaunchChecklist({ connected, dataStatus, gameState, onCompact, onInstal
         <ChecklistItem done={hasLiveData} label="收到实时 GSI 数据" />
       </div>
       <div className="check-actions">
+        <button className="primary-button" type="button" onClick={onPrepare} disabled={prepareBusy}>
+          {prepareBusy ? <RefreshCw className="spin" size={17} /> : <FolderCheck size={17} />}
+          一键准备
+        </button>
         <button className="ghost-button compact-toggle" type="button" onClick={onInstall} disabled={setupBusy}>
           {setupBusy ? <RefreshCw className="spin" size={17} /> : <FolderCheck size={17} />}
           安装 GSI
@@ -762,6 +781,8 @@ export default function App() {
   const { aiConfig, updateAiConfig } = useAiConfig();
   const [busy, setBusy] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [prepareBusy, setPrepareBusy] = useState(false);
+  const [prepareMessage, setPrepareMessage] = useState("");
 
   const gameState = snapshot?.gameState ?? {};
   const recommendation = snapshot?.recommendation ?? {};
@@ -794,6 +815,35 @@ export default function App() {
       setSnapshot(await postJson("/api/mock"));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function preparePlayerSetup() {
+    setPrepareBusy(true);
+    setPrepareMessage("正在准备本机环境...");
+    const steps = [];
+    try {
+      try {
+        await postJson("/api/setup/install");
+        steps.push("GSI 已安装");
+      } catch (error) {
+        steps.push(`GSI 未安装：${error.message}`);
+      }
+
+      try {
+        await syncData();
+        await refreshHeroes();
+        steps.push("公开数据已同步");
+      } catch (error) {
+        steps.push(`公开数据同步失败：${error.message}`);
+      }
+
+      await refreshSetup();
+      await refreshData();
+      await refreshDiagnostics();
+      setPrepareMessage(steps.join("；"));
+    } finally {
+      setPrepareBusy(false);
     }
   }
 
@@ -833,10 +883,13 @@ export default function App() {
         onCompact={() => setCompactMode(true)}
         onInstall={installSetup}
         onMock={loadMock}
+        onPrepare={preparePlayerSetup}
         onSync={async () => {
           await syncData();
           await refreshHeroes();
         }}
+        prepareBusy={prepareBusy}
+        prepareMessage={prepareMessage}
         setup={setup}
         setupBusy={setupBusy}
       />
@@ -903,24 +956,6 @@ export default function App() {
         </section>
 
         <div className="right-stack">
-          <SetupPanel setup={setup} setupBusy={setupBusy} setupError={setupError} onInstall={installSetup} onRefresh={refreshSetup} />
-          <DataPanel
-            dataBusy={dataBusy}
-            dataError={dataError}
-            dataStatus={dataStatus}
-            onRefresh={refreshData}
-            onSync={async () => {
-              await syncData();
-              await refreshHeroes();
-            }}
-          />
-          <DiagnosticsPanel
-            diagnostics={diagnostics}
-            diagnosticsBusy={diagnosticsBusy}
-            diagnosticsError={diagnosticsError}
-            onRefresh={refreshDiagnostics}
-          />
-          <GsiInspectorPanel gameState={gameState} />
           <EnemyLineupPanel
             activeEnemyHeroes={activeEnemyHeroes}
             enemyHeroesSource={enemyHeroesSource}
@@ -931,8 +966,6 @@ export default function App() {
             onChange={updateEnemyHeroes}
             onRefresh={refreshHeroes}
           />
-          <ReplayPanel />
-          <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
           <aside className="panel threat-panel">
             <div className="panel-title">
               <Shield size={18} />
@@ -944,6 +977,42 @@ export default function App() {
               ))}
             </div>
           </aside>
+          <details className="panel utility-drawer">
+            <summary>
+              <Settings size={17} />
+              系统与安全
+            </summary>
+            <div className="drawer-stack">
+              <SetupPanel setup={setup} setupBusy={setupBusy} setupError={setupError} onInstall={installSetup} onRefresh={refreshSetup} />
+              <DataPanel
+                dataBusy={dataBusy}
+                dataError={dataError}
+                dataStatus={dataStatus}
+                onRefresh={refreshData}
+                onSync={async () => {
+                  await syncData();
+                  await refreshHeroes();
+                }}
+              />
+              <DiagnosticsPanel
+                diagnostics={diagnostics}
+                diagnosticsBusy={diagnosticsBusy}
+                diagnosticsError={diagnosticsError}
+                onRefresh={refreshDiagnostics}
+              />
+              <GsiInspectorPanel gameState={gameState} />
+            </div>
+          </details>
+          <details className="panel utility-drawer">
+            <summary>
+              <Brain size={17} />
+              复盘与教练
+            </summary>
+            <div className="drawer-stack">
+              <ReplayPanel />
+              <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
+            </div>
+          </details>
         </div>
       </section>
     </main>
