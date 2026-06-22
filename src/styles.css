@@ -195,6 +195,51 @@ h2 {
   line-height: 1.4;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4, 8, 10, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.modal-card {
+  width: min(520px, 100%);
+  padding: 18px;
+  border: 1px solid rgba(137, 158, 158, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(25, 38, 44, 0.98), rgba(11, 17, 20, 0.98));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.launch-command {
+  display: block;
+  margin: 12px 0;
+  padding: 13px;
+  border: 1px solid rgba(123, 213, 193, 0.22);
+  border-radius: 8px;
+  color: #8df0c8;
+  background: #070d0f;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0 8px;
+}
+
+.launch-toggle {
+  margin-top: 10px;
+}
+
 .check-grid,
 .diagnostic-grid,
 .gsi-field-grid {

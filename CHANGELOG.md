@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+- Added a launch-option reminder dialog after one-click preparation.
+- Added a copy button for the safe Dota 2 launch option `-gamestateintegration`.
+- Added a "do not remind again" local preference and a manual way to show the reminder again.
+- Kept Steam configuration changes manual and transparent instead of modifying Steam settings automatically.
+
 ## 0.11.0
 
 - Added a one-click preparation action for GSI setup, public data sync, and status refresh.

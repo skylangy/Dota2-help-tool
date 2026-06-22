@@ -37,6 +37,7 @@ const priorityLabels = {
 };
 
 const STEAM_CDN = "https://cdn.cloudflare.steamstatic.com";
+const DOTA_LAUNCH_OPTION = "-gamestateintegration";
 
 function assetUrl(pathname) {
   if (!pathname) return "";
@@ -256,6 +257,41 @@ function useAiConfig() {
   return { aiConfig, updateAiConfig };
 }
 
+function useLaunchOptionReminder() {
+  const [showLaunchReminder, setShowLaunchReminder] = useState(false);
+  const [launchReminderDismissed, setLaunchReminderDismissed] = useState(() => (
+    window.localStorage.getItem("dota2-help-tool-hide-launch-reminder") === "true"
+  ));
+
+  function openLaunchReminder() {
+    if (!launchReminderDismissed) {
+      setShowLaunchReminder(true);
+    }
+  }
+
+  function closeLaunchReminder({ dontRemind = false } = {}) {
+    if (dontRemind) {
+      window.localStorage.setItem("dota2-help-tool-hide-launch-reminder", "true");
+      setLaunchReminderDismissed(true);
+    }
+    setShowLaunchReminder(false);
+  }
+
+  function resetLaunchReminder() {
+    window.localStorage.removeItem("dota2-help-tool-hide-launch-reminder");
+    setLaunchReminderDismissed(false);
+    setShowLaunchReminder(true);
+  }
+
+  return {
+    closeLaunchReminder,
+    launchReminderDismissed,
+    openLaunchReminder,
+    resetLaunchReminder,
+    showLaunchReminder
+  };
+}
+
 function StatusBadge({ connected }) {
   return (
     <div className={connected ? "status connected" : "status"}>
@@ -333,6 +369,67 @@ function LaunchChecklist({
         </button>
       </div>
     </section>
+  );
+}
+
+function LaunchOptionDialog({ onClose, open }) {
+  const [dontRemind, setDontRemind] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  if (!open) return null;
+
+  async function copyLaunchOption() {
+    try {
+      if (window.dota2HelpTool?.copyText) {
+        await window.dota2HelpTool.copyText(DOTA_LAUNCH_OPTION);
+        setCopied(true);
+        return;
+      }
+      await navigator.clipboard.writeText(DOTA_LAUNCH_OPTION);
+      setCopied(true);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = DOTA_LAUNCH_OPTION;
+      input.setAttribute("readonly", "true");
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.append(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+      setCopied(true);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="launch-option-title">
+        <div className="panel-title">
+          <Settings size={18} />
+          <h2 id="launch-option-title">还需要设置 Dota 2 启动项</h2>
+        </div>
+        <p className="setup-copy">
+          为了让 Dota 2 主动把只读 GSI 数据发送到本机，请把下面这段启动项复制到 Steam 的 Dota 2 属性里。
+        </p>
+        <code className="launch-command">{DOTA_LAUNCH_OPTION}</code>
+        <div className="modal-actions">
+          <button className="primary-button" type="button" onClick={copyLaunchOption}>
+            <FolderCheck size={17} />
+            {copied ? "已复制" : "复制启动项"}
+          </button>
+          <button className="ghost-button" type="button" onClick={() => onClose({ dontRemind })}>
+            我知道了
+          </button>
+        </div>
+        <label className="toggle-line launch-toggle">
+          <input checked={dontRemind} type="checkbox" onChange={(event) => setDontRemind(event.target.checked)} />
+          不再提醒
+        </label>
+        <p className="compact-safety">
+          工具不会自动修改 Steam 配置；这样更透明，也更符合安全边界。
+        </p>
+      </section>
+    </div>
   );
 }
 
@@ -779,6 +876,7 @@ export default function App() {
   const { diagnostics, diagnosticsBusy, diagnosticsError, refreshDiagnostics } = useDiagnostics();
   const { heroes, heroError, refreshHeroes } = useHeroCatalog();
   const { aiConfig, updateAiConfig } = useAiConfig();
+  const { closeLaunchReminder, openLaunchReminder, resetLaunchReminder, showLaunchReminder } = useLaunchOptionReminder();
   const [busy, setBusy] = useState(false);
   const [compact, setCompact] = useState(false);
   const [prepareBusy, setPrepareBusy] = useState(false);
@@ -842,6 +940,7 @@ export default function App() {
       await refreshData();
       await refreshDiagnostics();
       setPrepareMessage(steps.join("；"));
+      openLaunchReminder();
     } finally {
       setPrepareBusy(false);
     }
@@ -861,6 +960,7 @@ export default function App() {
 
   return (
     <main className="app">
+      <LaunchOptionDialog open={showLaunchReminder} onClose={closeLaunchReminder} />
       <header className="topbar">
         <div>
           <p className="eyebrow">Dota 2 Help Tool</p>
@@ -984,6 +1084,18 @@ export default function App() {
             </summary>
             <div className="drawer-stack">
               <SetupPanel setup={setup} setupBusy={setupBusy} setupError={setupError} onInstall={installSetup} onRefresh={refreshSetup} />
+              <aside className="panel setup-panel">
+                <div className="panel-title">
+                  <Settings size={18} />
+                  <h2>Steam 启动项</h2>
+                </div>
+                <p className="setup-copy">需要玩家手动把启动项加入 Dota 2 属性。工具不会自动修改 Steam 配置。</p>
+                <code className="launch-command">{DOTA_LAUNCH_OPTION}</code>
+                <button className="ghost-button" type="button" onClick={resetLaunchReminder}>
+                  <Settings size={17} />
+                  显示启动项提示
+                </button>
+              </aside>
               <DataPanel
                 dataBusy={dataBusy}
                 dataError={dataError}

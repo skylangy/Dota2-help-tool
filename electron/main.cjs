@@ -1,5 +1,5 @@
 const path = require("node:path");
-const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require("electron");
+const { app, BrowserWindow, Menu, clipboard, ipcMain, screen, shell } = require("electron");
 const { startServer } = require("../server/server.cjs");
 
 let mainWindow;
@@ -59,6 +59,10 @@ function setCompactMode(enabled) {
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   ipcMain.handle("window:set-compact-mode", (_event, enabled) => setCompactMode(enabled));
+  ipcMain.handle("clipboard:write-text", (_event, text) => {
+    clipboard.writeText(String(text ?? ""));
+    return true;
+  });
   localServer = await startServer({ silent: false, allowExisting: true });
   await createWindow();
 
