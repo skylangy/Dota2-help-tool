@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0
+
+- Added safe automatic lineup detection from Dota 2 GSI `allplayers` data when the game provides it.
+- Added GSI `allplayers` and `draft` requests to the generated config.
+- Automatic enemy lineup detection now updates inferred match-context tags and item recommendations.
+- Enemy lineup UI now shows whether the current lineup came from GSI, demo data, manual selection, or no available GSI lineup.
+- Added self-test coverage for simulated GSI automatic lineup detection.
+
 ## 0.7.0
 
 - Added an in-app safety diagnostics panel for setup, public data, live GSI, and recommendation health.

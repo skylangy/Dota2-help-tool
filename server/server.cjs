@@ -44,6 +44,7 @@ function createState() {
     },
     context: {
       enemyHeroes: [],
+      enemyHeroesSource: "manual",
       manualThreats: [],
       threats: []
     }
@@ -60,6 +61,7 @@ function diagnosticsSnapshot(state) {
       port: DEFAULT_PORT,
       gsiEndpoint: `http://${DEFAULT_HOST}:${DEFAULT_PORT}/gsi`,
       liveGsiReceived: Boolean(state.gameState.receivedAt),
+      autoLineupSource: state.gameState.lineups?.source ?? "none",
       recommendationStatus: recommend(state.gameState, state.context).status
     },
     setup: {
@@ -76,6 +78,7 @@ function diagnosticsSnapshot(state) {
     safety: {
       dataSources: [
         "Dota 2 Game State Integration JSON sent to localhost",
+        "Official Dota 2 GSI allplayers/draft fields when the game provides them",
         "Manual user-selected enemy lineup and context tags",
         "Public OpenDota constants and public match data",
         "Optional user-configured AI endpoint for explanation only"
@@ -152,6 +155,7 @@ function createApp() {
     const threats = [...new Set([...manualThreats, ...inferredThreats])];
     state.context = {
       enemyHeroes,
+      enemyHeroesSource: "manual",
       inferredThreats,
       manualThreats: manualThreats.filter((key) => Object.hasOwn(threatLabels, key)),
       threats: threats.filter((key) => Object.hasOwn(threatLabels, key))
@@ -162,6 +166,20 @@ function createApp() {
 
   app.post("/gsi", (req, res) => {
     state.gameState = parseGameState(req.body);
+    const autoEnemyHeroes = state.gameState.lineups?.enemies ?? [];
+    if (autoEnemyHeroes.length > 0) {
+      const inferredThreats = inferThreats(autoEnemyHeroes, heroCatalog());
+      const manualThreats = state.context.manualThreats ?? [];
+      const threats = [...new Set([...manualThreats, ...inferredThreats])];
+      state.context = {
+        ...state.context,
+        enemyHeroes: autoEnemyHeroes,
+        enemyHeroesSource: "gsi_allplayers",
+        inferredThreats,
+        manualThreats: manualThreats.filter((key) => Object.hasOwn(threatLabels, key)),
+        threats: threats.filter((key) => Object.hasOwn(threatLabels, key))
+      };
+    }
     broadcast();
     res.sendStatus(200);
   });
@@ -180,6 +198,7 @@ function createApp() {
     };
     state.context = {
       enemyHeroes: ["npc_dota_hero_lion", "npc_dota_hero_zuus"],
+      enemyHeroesSource: "demo",
       inferredThreats: ["control_heavy", "magic_burst"],
       manualThreats: ["control_heavy", "magic_burst"],
       threats: ["control_heavy", "magic_burst"]

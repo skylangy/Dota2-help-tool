@@ -49,6 +49,35 @@ async function main() {
     assert.ok(context.context.threats.includes("control_heavy"));
     assert.ok(context.context.threats.includes("magic_burst"));
 
+    await request("/gsi", {
+      method: "POST",
+      body: JSON.stringify({
+        provider: { name: "Dota 2" },
+        map: { clock_time: 1320, game_state: "DOTA_GAMERULES_STATE_GAME_IN_PROGRESS" },
+        player: { team_name: "radiant", gold: 2400, player_slot: 1 },
+        hero: { name: "npc_dota_hero_juggernaut", localized_name: "Juggernaut", level: 15 },
+        items: {
+          slot0: { name: "item_magic_wand" },
+          slot1: { name: "item_phase_boots" },
+          slot2: { name: "item_bfury" }
+        },
+        allplayers: {
+          player0: { team_name: "radiant", hero_name: "npc_dota_hero_juggernaut", player_slot: 1 },
+          player1: { team_name: "radiant", hero_name: "npc_dota_hero_crystal_maiden", player_slot: 2 },
+          player2: { team_name: "dire", hero_name: "npc_dota_hero_lion", player_slot: 128 },
+          player3: { team_name: "dire", hero_name: "npc_dota_hero_zuus", player_slot: 129 },
+          player4: { team_name: "dire", hero_name: "npc_dota_hero_phantom_assassin", player_slot: 130 }
+        }
+      })
+    });
+    const autoGsi = await request("/api/state");
+    assert.equal(autoGsi.context.enemyHeroesSource, "gsi_allplayers");
+    assert.ok(autoGsi.context.enemyHeroes.includes("npc_dota_hero_phantom_assassin"));
+    assert.ok(autoGsi.context.threats.includes("evasion"));
+    assert.ok(autoGsi.context.threats.includes("magic_burst"));
+    assert.equal(autoGsi.gameState.lineups.source, "gsi_allplayers");
+    assert.ok(autoGsi.recommendation.suggestions.length > 0);
+
     const ai = await request("/api/ai/coach", {
       method: "POST",
       body: JSON.stringify({ enabled: false })

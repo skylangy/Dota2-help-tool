@@ -312,12 +312,22 @@ function ThreatToggle({ id, label, active, onToggle }) {
   );
 }
 
-function EnemyLineupPanel({ activeEnemyHeroes, heroes, heroError, inferredThreats, onChange, onRefresh }) {
+function EnemyLineupPanel({ activeEnemyHeroes, enemyHeroesSource, gameLineups, heroes, heroError, inferredThreats, onChange, onRefresh }) {
   const [query, setQuery] = useState("");
   const selected = new Set(activeEnemyHeroes);
   const filteredHeroes = heroes
     .filter((hero) => (hero.name ?? "").toLowerCase().includes(query.toLowerCase()) || hero.id.toLowerCase().includes(query.toLowerCase()))
     .slice(0, 40);
+  const sourceLabel = {
+    gsi_allplayers: "GSI 自动读取",
+    demo: "演示数据",
+    manual: "手动选择"
+  }[enemyHeroesSource] ?? "等待 GSI 阵容";
+  const lineupSource = gameLineups?.source === "gsi_allplayers"
+    ? `Radiant ${gameLineups.radiant?.length ?? 0} / Dire ${gameLineups.dire?.length ?? 0}`
+    : gameLineups?.source === "gsi_draft"
+      ? `Draft ${gameLineups.draftHeroes?.length ?? 0}`
+      : "GSI 暂未提供双方阵容";
 
   function toggleHero(heroId) {
     const next = selected.has(heroId)
@@ -334,7 +344,11 @@ function EnemyLineupPanel({ activeEnemyHeroes, heroes, heroError, inferredThreat
         <Search size={18} />
         <h2>敌方阵容</h2>
       </div>
-      <p className="setup-copy">手动选择敌方英雄，用公开角色数据推断局势标签。不会自动读取隐藏信息。</p>
+      <p className="setup-copy">优先使用 Dota 2 GSI 主动发送的阵容数据；如果 GSI 未提供，再手动选择。不会读取隐藏信息。</p>
+      <div className="auto-lineup-status">
+        <span>{sourceLabel}</span>
+        <p>{lineupSource}</p>
+      </div>
       <input
         className="search-input"
         placeholder="搜索英雄，先同步公开数据"
@@ -671,6 +685,7 @@ export default function App() {
   const threats = snapshot?.threats ?? {};
   const activeThreats = useMemo(() => new Set(context.manualThreats ?? context.threats ?? []), [context.manualThreats, context.threats]);
   const activeEnemyHeroes = context.enemyHeroes ?? [];
+  const enemyHeroesSource = context.enemyHeroesSource ?? "manual";
   const inferredThreats = context.inferredThreats ?? [];
 
   async function setCompactMode(enabled) {
@@ -815,6 +830,8 @@ export default function App() {
           />
           <EnemyLineupPanel
             activeEnemyHeroes={activeEnemyHeroes}
+            enemyHeroesSource={enemyHeroesSource}
+            gameLineups={gameState.lineups}
             heroes={heroes}
             heroError={heroError}
             inferredThreats={inferredThreats.map((key) => threats[key] ?? key)}

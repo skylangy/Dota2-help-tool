@@ -541,6 +541,28 @@ h2 {
   font-size: 13px;
 }
 
+.auto-lineup-status {
+  display: grid;
+  gap: 5px;
+  margin: 12px 0;
+  padding: 10px;
+  border-radius: 8px;
+  color: #24464a;
+  background: rgba(226, 244, 235, 0.75);
+}
+
+.auto-lineup-status span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auto-lineup-status p {
+  color: #465b62;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .text-button {
   border: 0;
   color: #2d6f74;

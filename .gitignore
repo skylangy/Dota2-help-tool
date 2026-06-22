@@ -1,6 +1,7 @@
 node_modules/
 dist/
 release/
+screenshots/
 .env
 .env.local
 npm-debug.log*

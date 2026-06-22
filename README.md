@@ -17,11 +17,12 @@ Current features:
 - Local GSI receiver at `http://127.0.0.1:3008/gsi`.
 - Real-time hero, time, level, gold, and item display.
 - Automatic next-item recommendation from your current GSI state.
+- Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data.
 - Dedicated rules for selected heroes.
 - Generic recommendation rules for all heroes.
 - OpenDota public constants sync for latest hero/item metadata and hero roles.
 - Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, silence, armor need, and dispel need.
-- Manual enemy lineup selection. The app infers tags only from heroes you choose manually.
+- Manual enemy lineup selection remains available as a fallback when GSI does not provide both-team lineup data.
 - Basic post-match review from a public OpenDota Match ID, with local coach diagnostics for deaths, economy, XP, farm, item timing, damage, and objective conversion.
 - Optional edge mini-window. This is a normal always-on-top desktop window, not an injected game overlay.
 - Optional AI coach:
@@ -50,6 +51,7 @@ It does **not**:
 The app only uses:
 
 - Dota 2 Game State Integration JSON sent by the game to localhost.
+- Official GSI `allplayers` / `draft` fields when Dota 2 chooses to provide them.
 - Manual user-selected context tags.
 - Public OpenDota constants data.
 - Optional user-configured AI endpoint for explanation only.
@@ -116,11 +118,12 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - 本地 GSI 接收地址：`http://127.0.0.1:3008/gsi`。
 - 实时显示英雄、时间、等级、金钱、已有物品。
 - 根据当前 GSI 状态自动给出下一件装备建议。
+- 当 Dota 2 GSI 提供 `allplayers` 数据时，自动识别敌方阵容并推断局势标签。
 - 部分英雄有专属规则。
 - 所有英雄都有通用推荐规则。
 - 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
 - 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、沉默多、缺护甲、需要驱散等。
-- 手动选择敌方阵容。应用只根据你手动选择的英雄推断局势标签。
+- 仍然保留手动选择敌方阵容；当 GSI 没有提供双方阵容时作为兜底。
 - 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据，并用本地规则总结死亡、经济、经验、补刀、装备节奏、伤害和推塔转化问题。
 - 可选屏幕边缘小窗。它是普通置顶桌面窗口，不是注入式游戏内 overlay。
 - 可选 AI 教练：
@@ -149,6 +152,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 它只使用：
 
 - Dota 2 主动发送到 localhost 的 GSI JSON。
+- Dota 2 官方 GSI 在允许时提供的 `allplayers` / `draft` 字段。
 - 玩家手动选择的局势标签。
 - OpenDota 公开常量数据。
 - OpenDota 公开比赛数据。
