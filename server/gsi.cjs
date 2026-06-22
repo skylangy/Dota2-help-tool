@@ -28,6 +28,43 @@ function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function countObject(value) {
+  if (!value || typeof value !== "object") return 0;
+  return Object.keys(value).length;
+}
+
+function parseGsiFields(payload = {}) {
+  const keys = [
+    "provider",
+    "map",
+    "player",
+    "hero",
+    "abilities",
+    "items",
+    "allplayers",
+    "draft",
+    "buildings",
+    "wearables"
+  ];
+
+  return keys.map((key) => ({
+    key,
+    received: Object.hasOwn(payload, key),
+    entries: countObject(payload[key])
+  }));
+}
+
+function parseBuildingSummary(buildings = {}) {
+  const entries = Object.entries(buildings).filter(([, value]) => value && typeof value === "object");
+  const alive = entries.filter(([, value]) => value.health === undefined || Number(value.health) > 0).length;
+  const destroyed = entries.filter(([, value]) => Number(value.health) === 0 || value.destroyed === true).length;
+  return {
+    total: entries.length,
+    alive,
+    destroyed
+  };
+}
+
 function parseAllPlayers(allplayers = {}, localPlayer = {}) {
   const players = Object.values(allplayers)
     .map((entry) => {
@@ -98,6 +135,7 @@ function parseGameState(payload = {}) {
       ? allplayers.dire
       : [];
   const draftHeroes = parseDraftHeroes(payload.draft);
+  const buildingSummary = parseBuildingSummary(payload.buildings);
 
   return {
     receivedAt: new Date().toISOString(),
@@ -118,6 +156,10 @@ function parseGameState(payload = {}) {
       enemies,
       draftHeroes,
       observedCount: allplayers.observedCount
+    },
+    gsi: {
+      fields: parseGsiFields(payload),
+      buildingSummary
     },
     raw: {
       provider: payload.provider,

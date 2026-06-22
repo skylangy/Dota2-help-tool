@@ -61,6 +61,14 @@ async function main() {
           slot1: { name: "item_phase_boots" },
           slot2: { name: "item_bfury" }
         },
+        abilities: {
+          ability0: { name: "juggernaut_blade_fury", level: 4 },
+          ability1: { name: "juggernaut_healing_ward", level: 2 }
+        },
+        buildings: {
+          dota_goodguys_tower1_mid: { health: 0 },
+          dota_badguys_tower1_mid: { health: 1200 }
+        },
         allplayers: {
           player0: { team_name: "radiant", hero_name: "npc_dota_hero_juggernaut", player_slot: 1 },
           player1: { team_name: "radiant", hero_name: "npc_dota_hero_crystal_maiden", player_slot: 2 },
@@ -76,6 +84,10 @@ async function main() {
     assert.ok(autoGsi.context.threats.includes("evasion"));
     assert.ok(autoGsi.context.threats.includes("magic_burst"));
     assert.equal(autoGsi.gameState.lineups.source, "gsi_allplayers");
+    assert.ok(autoGsi.gameState.gsi.fields.find((field) => field.key === "allplayers").received);
+    assert.ok(autoGsi.gameState.gsi.fields.find((field) => field.key === "buildings").received);
+    assert.equal(autoGsi.gameState.gsi.buildingSummary.total, 2);
+    assert.equal(autoGsi.gameState.gsi.buildingSummary.destroyed, 1);
     assert.ok(autoGsi.recommendation.suggestions.length > 0);
 
     const ai = await request("/api/ai/coach", {

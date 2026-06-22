@@ -78,7 +78,7 @@ function diagnosticsSnapshot(state) {
     safety: {
       dataSources: [
         "Dota 2 Game State Integration JSON sent to localhost",
-        "Official Dota 2 GSI allplayers/draft fields when the game provides them",
+        "Official Dota 2 GSI allplayers/draft/buildings fields when the game provides them",
         "Manual user-selected enemy lineup and context tags",
         "Public OpenDota constants and public match data",
         "Optional user-configured AI endpoint for explanation only"

@@ -7,7 +7,7 @@ No third-party assistant can honestly guarantee absolute zero account risk, beca
 Allowed data sources:
 
 - Dota 2 Game State Integration JSON sent by the game to `127.0.0.1`.
-- Official Dota 2 GSI `allplayers` / `draft` fields when the game provides them.
+- Official Dota 2 GSI `allplayers` / `draft` / `buildings` fields when the game provides them.
 - Manual context tags selected by the user.
 - Public OpenDota constants data.
 - Public OpenDota match data entered by Match ID.
@@ -38,7 +38,7 @@ Post-match diagnostics are inferred from public OpenDota match statistics only. 
 允许的数据来源：
 
 - Dota 2 主动发送到 `127.0.0.1` 的 Game State Integration JSON。
-- Dota 2 官方 GSI 在允许时提供的 `allplayers` / `draft` 字段。
+- Dota 2 官方 GSI 在允许时提供的 `allplayers` / `draft` / `buildings` 字段。
 - 玩家手动选择的局势标签。
 - OpenDota 公开常量数据。
 - 用户输入 Match ID 后拉取的 OpenDota 公开比赛数据。

@@ -18,6 +18,7 @@ Current features:
 - Real-time hero, time, level, gold, and item display.
 - Automatic next-item recommendation from your current GSI state.
 - Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data.
+- GSI data inspector showing which requested blocks were actually received, including `buildings` when available.
 - Dedicated rules for selected heroes.
 - Generic recommendation rules for all heroes.
 - OpenDota public constants sync for latest hero/item metadata and hero roles.
@@ -31,6 +32,15 @@ Current features:
   - Optional OpenAI-compatible endpoint support if the user provides their own endpoint and key.
 - Launch-test checklist with quick actions for GSI install, public data sync, demo state, and compact window.
 - Safety diagnostics panel that reports local setup, public data cache, live GSI status, recommendation health, and the explicit non-cheat capability boundary.
+
+Requested GSI blocks:
+
+- `provider`, `map`, `player`, `hero`
+- `abilities`, `items`
+- `allplayers`, `draft`
+- `buildings`
+
+The app shows whether each block was actually received. Dota 2 may limit fields depending on whether you are playing, spectating, or in draft.
 
 ### Safety Boundary
 
@@ -51,7 +61,7 @@ It does **not**:
 The app only uses:
 
 - Dota 2 Game State Integration JSON sent by the game to localhost.
-- Official GSI `allplayers` / `draft` fields when Dota 2 chooses to provide them.
+- Official GSI `allplayers` / `draft` / `buildings` fields when Dota 2 chooses to provide them.
 - Manual user-selected context tags.
 - Public OpenDota constants data.
 - Optional user-configured AI endpoint for explanation only.
@@ -119,6 +129,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 - 实时显示英雄、时间、等级、金钱、已有物品。
 - 根据当前 GSI 状态自动给出下一件装备建议。
 - 当 Dota 2 GSI 提供 `allplayers` 数据时，自动识别敌方阵容并推断局势标签。
+- GSI 数据检查器：显示本局实际收到了哪些 GSI 数据块，包括可用时的 `buildings`。
 - 部分英雄有专属规则。
 - 所有英雄都有通用推荐规则。
 - 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
@@ -132,6 +143,15 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
   - 可选 OpenAI-compatible 接口，由用户自己填写 endpoint 和 key。
 - 上线测试清单：快速检查本地服务、GSI 配置、公开数据缓存和实时 GSI 数据。
 - 安全诊断面板：显示本机配置、公开数据缓存、实时 GSI、推荐引擎状态，以及明确不包含的外挂式能力边界。
+
+当前请求的 GSI 数据块：
+
+- `provider`、`map`、`player`、`hero`
+- `abilities`、`items`
+- `allplayers`、`draft`
+- `buildings`
+
+应用会显示每个数据块本局是否实际收到。Dota 2 可能根据玩家、观战、BP 等状态限制字段。
 
 ### 安全边界
 
@@ -152,7 +172,7 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 它只使用：
 
 - Dota 2 主动发送到 localhost 的 GSI JSON。
-- Dota 2 官方 GSI 在允许时提供的 `allplayers` / `draft` 字段。
+- Dota 2 官方 GSI 在允许时提供的 `allplayers` / `draft` / `buildings` 字段。
 - 玩家手动选择的局势标签。
 - OpenDota 公开常量数据。
 - OpenDota 公开比赛数据。

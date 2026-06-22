@@ -491,6 +491,40 @@ function DiagnosticsPanel({ diagnostics, diagnosticsBusy, diagnosticsError, onRe
   );
 }
 
+function GsiInspectorPanel({ gameState }) {
+  const fields = gameState?.gsi?.fields ?? [];
+  const buildingSummary = gameState?.gsi?.buildingSummary ?? { total: 0, alive: 0, destroyed: 0 };
+  const hasPayload = Boolean(gameState?.receivedAt);
+
+  return (
+    <aside className="panel gsi-inspector-panel">
+      <div className="panel-title">
+        <Activity size={18} />
+        <h2>GSI 数据检查</h2>
+      </div>
+      <p className="setup-copy">
+        显示 Dota 2 本次主动发送到 localhost 的字段。未出现的字段不会被猜测或越权读取。
+      </p>
+      <div className="gsi-field-grid">
+        {fields.length > 0 ? fields.map((field) => (
+          <div className={field.received ? "gsi-field received" : "gsi-field"} key={field.key}>
+            {field.received ? <Check size={14} /> : <CircleAlert size={14} />}
+            <span>{field.key}</span>
+            <strong>{field.entries}</strong>
+          </div>
+        )) : (
+          <p className="empty-gsi">{hasPayload ? "等待字段统计" : "尚未收到 GSI payload"}</p>
+        )}
+      </div>
+      <div className="gsi-summary">
+        <Stat label="建筑字段" value={buildingSummary.total} />
+        <Stat label="已毁建筑" value={buildingSummary.destroyed} />
+      </div>
+      <code className="path-line">{gameState?.receivedAt ? new Date(gameState.receivedAt).toLocaleString() : "等待 Dota 2 GSI"}</code>
+    </aside>
+  );
+}
+
 function AiPanel({ aiConfig, onConfigChange }) {
   const [coachText, setCoachText] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -828,6 +862,7 @@ export default function App() {
             diagnosticsError={diagnosticsError}
             onRefresh={refreshDiagnostics}
           />
+          <GsiInspectorPanel gameState={gameState} />
           <EnemyLineupPanel
             activeEnemyHeroes={activeEnemyHeroes}
             enemyHeroesSource={enemyHeroesSource}

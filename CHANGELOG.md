@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0
+
+- Added `buildings` to the generated GSI config.
+- Added a GSI data inspector panel showing which requested GSI blocks were actually received.
+- Added building summary diagnostics for received GSI building data.
+- Extended self-test coverage for abilities, buildings, allplayers, and GSI field visibility.
+
 ## 0.8.0
 
 - Added safe automatic lineup detection from Dota 2 GSI `allplayers` data when the game provides it.
