@@ -9,31 +9,32 @@
 
 ### What It Does
 
-Dota 2 Help Tool gives beginner-friendly item suggestions while you play. It runs on your own computer, listens only on `127.0.0.1`, and receives read-only Dota 2 Game State Integration data.
+Dota 2 Help Tool gives beginner-friendly item suggestions while you play. It runs on your own computer and receives read-only Dota 2 Game State Integration data. By default its API listens only on `127.0.0.1`; an optional, read-only phone view can be enabled to mirror suggestions to your phone over your local network.
 
 Current features:
 
 - Electron desktop app for Windows.
 - Local GSI receiver at `http://127.0.0.1:3008/gsi`.
-- Optional local GSI auth token: one-click GSI setup writes a per-machine token into the Dota 2 GSI config and the local receiver validates it.
+- Optional local GSI auth token: one-click setup writes a per-machine token into the Dota 2 GSI config and the local receiver validates it.
 - Real-time hero, time, level, gold, and item display.
-- Automatic next-item recommendation from your current GSI state.
-- Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data.
+- Automatic next-item recommendation from your current GSI state, with gold-aware hints (how much more gold a key item needs) and up to two counter items matched to the detected enemy threats.
+- Honest threat notes that separate what was actually addressed with an item from what was only identified.
+- Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data, plus threat inference for a large hero roster.
 - GSI data inspector showing which requested blocks were actually received, including `buildings` when available.
-- Dark esports command-center UI with item and hero images from the latest synced OpenDota constants.
-- Dedicated rules for selected heroes.
-- Generic recommendation rules for all heroes.
-- OpenDota public constants sync for latest hero/item metadata and hero roles.
-- OpenDota image paths are synced with public constants and loaded from the Steam CDN, with text fallbacks if an image is unavailable.
-- Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, silence, armor need, and dispel need.
+- Dark esports command-center UI with item and hero images from the latest synced OpenDota constants, and a responsive layout for small and large windows.
+- Dedicated rules for selected heroes, with generic role-based rules covering all heroes.
+- OpenDota public constants sync for latest hero/item metadata and hero roles; images load from the Steam CDN with text fallbacks.
+- Manual match-context tags such as heavy control, magic burst, evasion, healing, illusions, invisibility, silence, armor need, and dispel need.
 - Manual enemy lineup selection remains available as a fallback when GSI does not provide both-team lineup data.
-- Basic post-match review from a public OpenDota Match ID, with local coach diagnostics for deaths, economy, XP, farm, item timing, damage, and objective conversion.
-- Optional edge mini-window. This is a normal always-on-top desktop window, not an injected game overlay.
+- Basic post-match review from a public OpenDota Match ID, with local coach diagnostics and each player's full item build (including backpack and neutral items).
+- Optional minimal edge mini-window showing only the next item and recommended items. This is a normal always-on-top desktop window, not an injected game overlay, so it only shows over Dota in borderless/windowed mode.
+- Optional voice readout that speaks the top suggestion using the browser's built-in speech synthesis (audio only).
+- Optional phone second-screen: a one-click, read-only, PIN-protected view you open on your phone (same Wi-Fi) by scanning an on-screen QR code; an auto-detected free port is used and the main API stays on `127.0.0.1`.
 - Optional AI coach:
   - Local rule fallback works without AI setup.
   - Optional Ollama local model support.
   - Optional OpenAI-compatible endpoint support if the user provides their own endpoint and key.
-- Launch-test checklist with quick actions for GSI install, public data sync, demo state, and compact window.
+- Launch-test checklist with a one-click Prepare action (installs the GSI config and syncs public data).
 - Safety diagnostics panel that reports local setup, public data cache, live GSI status, recommendation health, and the explicit non-cheat capability boundary.
 
 Requested GSI blocks:
@@ -72,6 +73,8 @@ The app only uses:
 
 The edge mini-window is a normal Electron window placed near the screen edge after the user clicks the button. It does not attach to Dota 2, does not modify the game, and does not use an in-game overlay hook.
 
+The optional phone view is a separate, read-only server that you explicitly turn on. It binds to your local network only while enabled, is protected by a one-time PIN, and exposes nothing but the same suggestions the desktop already shows — it has no game-data input and cannot change any state. The main API server always stays bound to `127.0.0.1`. It still performs no game-process interaction of any kind, so it does not change the safety boundary above. Enabling it may trigger a Windows Firewall prompt, which you must allow yourself.
+
 “Automatic” means the app automatically analyzes read-only GSI data that Dota 2 sends to localhost. It does not automatically inspect the Dota 2 process, screen pixels, memory, packets, or enemy hidden information.
 
 Sources:
@@ -85,20 +88,19 @@ Sources:
 
 1. Download the Windows installer or zip from GitHub Releases.
 2. Open the app.
-3. Use the launch-test checklist at the top of the app.
-4. Click `Install GSI`.
-   - This writes a local GSI config and a per-machine auth token. It does not modify Steam launch options.
-5. In Steam, open Dota 2 Properties and add this launch option:
+3. At the top, click `Prepare`. This installs the local GSI config (with a per-machine auth token) and syncs public OpenDota data. It does not modify Steam launch options.
+4. In Steam, open Dota 2 Properties and add this launch option:
 
 ```text
 -gamestateintegration
 ```
 
-6. Click `Sync Data`.
-7. Start Dota 2 and enter a match.
-8. Optional: manually choose enemy heroes to infer match-context tags.
-9. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
-10. Optional: click `Edge Mini-Window` to move the app into a small normal desktop window near the screen edge.
+5. Start Dota 2 and enter a match.
+6. Optional: manually choose enemy heroes to infer match-context tags.
+7. Optional: enter a Match ID after the game to fetch a basic OpenDota review.
+8. Optional: click `Phone View` and scan the QR code with your phone (on the same Wi-Fi) to watch suggestions on a second screen.
+9. Optional: toggle `Voice` to have the top suggestion read aloud.
+10. Optional: click `Edge Mini-Window` for a small always-on-top window showing only the next item and recommended items (use Dota's borderless/windowed mode so it stays visible).
 11. Optional: open `Safety Diagnostics` to verify what the app is using and what it deliberately does not do.
 
 ### Developer Setup
@@ -124,30 +126,32 @@ npm run dist
 
 ### 这个工具做什么
 
-Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只在玩家自己的电脑上运行，只监听 `127.0.0.1`，通过 Dota 2 Game State Integration 接收游戏主动发送的只读状态数据。
+Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它在玩家自己的电脑上运行，通过 Dota 2 Game State Integration 接收游戏主动发送的只读状态数据。默认情况下其 API 只监听 `127.0.0.1`；可选开启一个只读的「手机查看」，把建议通过局域网镜像到你的手机上。
 
 当前功能：
 
 - Windows Electron 桌面应用。
 - 本地 GSI 接收地址：`http://127.0.0.1:3008/gsi`。
+- 可选本地 GSI 鉴权 token：一键设置会把每台机器独立的 token 写入 Dota 2 GSI 配置，本地接收端会校验。
 - 实时显示英雄、时间、等级、金钱、已有物品。
-- 根据当前 GSI 状态自动给出下一件装备建议。
-- 当 Dota 2 GSI 提供 `allplayers` 数据时，自动识别敌方阵容并推断局势标签。
+- 根据当前 GSI 状态自动给出下一件装备建议，并带金钱提示（关键装还差多少钱），还会针对识别到的敌方威胁最多给出两件针对装。
+- 诚实的局势说明：区分「本次已给出对应装备」和「仅识别到、未单独出装」。
+- 当 Dota 2 GSI 提供 `allplayers` 数据时，自动识别敌方阵容，并对大量英雄做威胁推断。
 - GSI 数据检查器：显示本局实际收到了哪些 GSI 数据块，包括可用时的 `buildings`。
-- 暗色电竞指挥台 UI，装备和英雄图片来自最新同步的 OpenDota 公开常量。
-- 部分英雄有专属规则。
-- 所有英雄都有通用推荐规则。
-- 从 OpenDota 同步公开英雄/物品常量数据，用于识别最新英雄和角色定位。
-- 图片路径随 OpenDota 公开常量同步，并从 Steam CDN 加载；如果图片不可用，会自动回退为文字占位。
-- 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、沉默多、缺护甲、需要驱散等。
+- 暗色电竞指挥台 UI，装备和英雄图片来自最新同步的 OpenDota 公开常量；并对大小窗口做了自适应排版。
+- 部分英雄有专属规则，其余英雄按角色走通用规则，全英雄覆盖。
+- 从 OpenDota 同步公开英雄/物品常量数据；图片从 Steam CDN 加载，不可用时回退为文字占位。
+- 手动局势标签：控制多、魔法爆发高、闪避、回复强、幻象多、隐身多、沉默多、缺护甲、需要驱散等。
 - 仍然保留手动选择敌方阵容；当 GSI 没有提供双方阵容时作为兜底。
-- 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据，并用本地规则总结死亡、经济、经验、补刀、装备节奏、伤害和推塔转化问题。
-- 可选屏幕边缘小窗。它是普通置顶桌面窗口，不是注入式游戏内 overlay。
+- 基础战后复盘：输入公开 Match ID，从 OpenDota 拉取比赛数据，用本地规则总结问题，并显示每名玩家的完整出装（含后备栏和中立装备）。
+- 可选精简的屏幕边缘小窗，只显示「下一件 + 推荐装备」。它是普通置顶桌面窗口，不是注入式游戏内 overlay，因此只在无边框/窗口化模式下能盖在 Dota 上。
+- 可选语音播报：用浏览器自带的语音合成把最优先的建议念出来（仅音频）。
+- 可选手机第二屏：一键开启、只读、带 PIN 的视图，手机（同一 Wi-Fi）扫屏幕上的二维码即可打开；端口自动探测空闲值，主 API 仍只在 `127.0.0.1`。
 - 可选 AI 教练：
   - 默认不需要 AI，使用本地规则解释。
   - 可选本地 Ollama 模型。
   - 可选 OpenAI-compatible 接口，由用户自己填写 endpoint 和 key。
-- 上线测试清单：快速检查本地服务、GSI 配置、公开数据缓存和实时 GSI 数据。
+- 上线测试清单：一个「一键准备」按钮（安装 GSI 配置 + 同步公开数据）。
 - 安全诊断面板：显示本机配置、公开数据缓存、实时 GSI、推荐引擎状态，以及明确不包含的外挂式能力边界。
 
 当前请求的 GSI 数据块：
@@ -186,6 +190,8 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 
 边缘小窗是用户点击按钮后移动到屏幕边缘的普通 Electron 窗口。它不附着到 Dota 2，不修改游戏，也不使用游戏内 overlay Hook。
 
+可选的「手机查看」是一个**需要你手动开启的、独立的只读服务**：仅在开启期间绑定到局域网，由一次性 PIN 保护，且只暴露与桌面端相同的建议——它没有任何游戏数据输入，也无法改动任何状态。主 API 服务始终只绑定 `127.0.0.1`。它同样不与游戏进程发生任何交互，因此不改变上面的安全边界。开启时 Windows 防火墙可能会弹窗，需要你自己点「允许」。
+
 这里的“自动”指自动分析 Dota 2 主动发送到 localhost 的只读 GSI 数据；不代表自动检查 Dota 2 进程、屏幕像素、内存、封包或敌方隐藏信息。
 
 参考来源：
@@ -199,19 +205,19 @@ Dota 2 Help Tool 是一个面向新手的本地装备建议桌面应用。它只
 
 1. 从 GitHub Releases 下载 Windows 安装包或 zip。
 2. 打开应用。
-3. 先看应用顶部的上线测试清单。
-4. 点击 `安装 GSI`。
-5. 在 Steam 的 Dota 2 启动项里加入：
+3. 在顶部点击 `一键准备`。它会安装本地 GSI 配置（含每台机器独立的 token）并同步 OpenDota 公开数据；不会修改 Steam 启动项。
+4. 在 Steam 的 Dota 2 启动项里加入：
 
 ```text
 -gamestateintegration
 ```
 
-6. 点击 `同步数据`。
-7. 启动 Dota 2 并进入比赛。
-8. 可选：手动选择敌方英雄，让工具推断局势标签。
-9. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
-10. 可选：点击 `边缘小窗`，把应用移动成屏幕边缘的普通桌面小窗。
+5. 启动 Dota 2 并进入比赛。
+6. 可选：手动选择敌方英雄，让工具推断局势标签。
+7. 可选：赛后输入 Match ID，查看基础 OpenDota 复盘。
+8. 可选：点击 `手机查看`，用手机（同一 Wi-Fi）扫描屏幕上的二维码，在第二块屏幕上看建议。
+9. 可选：点击 `语音`，让工具把最优先的建议念出来。
+10. 可选：点击 `边缘小窗`，得到一个只显示「下一件 + 推荐」的置顶小窗（请把 Dota 设为无边框/窗口化模式，小窗才会显示在游戏上）。
 11. 可选：查看 `安全诊断`，确认应用正在使用什么数据，以及它明确不会做什么。
 
 ### 开发
