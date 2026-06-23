@@ -10,6 +10,7 @@ const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require(
 const { inferThreats } = require("./lineup.cjs");
 const { fetchMatch } = require("./replay.cjs");
 const { appVersion } = require("./version.cjs");
+const { startPhoneBridge } = require("./phone-bridge.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -105,6 +106,7 @@ function createApp() {
   const app = express();
   const server = http.createServer(app);
   const wss = new WebSocketServer({ server });
+  let phoneBridge = null;
 
   function snapshot() {
     return {
@@ -116,11 +118,16 @@ function createApp() {
   }
 
   function broadcast() {
-    const message = JSON.stringify({ type: "snapshot", payload: snapshot() });
+    const payload = snapshot();
+    const message = JSON.stringify({ type: "snapshot", payload });
     for (const client of wss.clients) {
       if (client.readyState === client.OPEN) {
         client.send(message);
       }
+    }
+    // Mirror live updates to the phone second-screen, if the user has enabled it.
+    if (phoneBridge) {
+      phoneBridge.broadcast(payload);
     }
   }
 
@@ -272,7 +279,45 @@ function createApp() {
     }
   });
 
-  return { app, server, wss };
+  function phoneStatus() {
+    if (!phoneBridge) {
+      return { enabled: false };
+    }
+    return {
+      enabled: true,
+      port: phoneBridge.port,
+      pin: phoneBridge.pin,
+      addresses: phoneBridge.addresses,
+      urls: phoneBridge.urls,
+      primaryUrl: phoneBridge.urls[0] ?? null,
+      qr: phoneBridge.qr
+    };
+  }
+
+  app.get("/api/phone/status", (_req, res) => {
+    res.json(phoneStatus());
+  });
+
+  app.post("/api/phone/enable", async (_req, res) => {
+    try {
+      if (!phoneBridge) {
+        phoneBridge = await startPhoneBridge({ getSnapshot: snapshot });
+      }
+      res.json(phoneStatus());
+    } catch (error) {
+      res.status(500).json({ code: "PHONE_BRIDGE_FAILED", message: error.message });
+    }
+  });
+
+  app.post("/api/phone/disable", async (_req, res) => {
+    if (phoneBridge) {
+      await phoneBridge.stop();
+      phoneBridge = null;
+    }
+    res.json(phoneStatus());
+  });
+
+  return { app, server, wss, stopPhoneBridge: async () => { if (phoneBridge) { await phoneBridge.stop(); phoneBridge = null; } } };
 }
 
 function startServer(options = {}) {

@@ -7,7 +7,7 @@
     "late": ["item_butterfly", "item_abyssal_blade", "item_satanic"],
     "situational": {
       "control_heavy": ["item_black_king_bar", "item_manta"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "evasion": ["item_monkey_king_bar"],
       "tank_frontline": ["item_silver_edge"],
       "illusion_enemy": ["item_bfury", "item_mjollnir"]
@@ -21,7 +21,7 @@
     "late": ["item_abyssal_blade", "item_satanic", "item_butterfly"],
     "situational": {
       "control_heavy": ["item_black_king_bar"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "evasion": ["item_monkey_king_bar"],
       "kite": ["item_blink", "item_basher"],
       "illusion_enemy": ["item_bfury"]
@@ -36,7 +36,7 @@
     "situational": {
       "control_heavy": ["item_black_king_bar"],
       "gap_close": ["item_hurricane_pike", "item_force_staff"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "evasion": ["item_monkey_king_bar"],
       "illusion_enemy": ["item_mjollnir"]
     }
@@ -50,7 +50,7 @@
     "situational": {
       "gap_close": ["item_hurricane_pike", "item_force_staff"],
       "control_heavy": ["item_black_king_bar"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "evasion": ["item_monkey_king_bar"]
     }
   },
@@ -115,7 +115,7 @@
     "situational": {
       "evasion": ["item_monkey_king_bar"],
       "control_heavy": ["item_black_king_bar"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "physical_burst": ["item_blade_mail"]
     }
   },
@@ -128,7 +128,7 @@
     "situational": {
       "magic_burst": ["item_pipe", "item_black_king_bar"],
       "physical_burst": ["item_shivas_guard"],
-      "single_target_catch": ["item_lotus_orb", "item_linken_sphere"],
+      "single_target_catch": ["item_lotus_orb", "item_sphere"],
       "high_healing": ["item_spirit_vessel"]
     }
   },
@@ -215,7 +215,7 @@
     "name": "食人魔魔法师",
     "role": "辅助/前排",
     "lane": ["item_magic_wand", "item_arcane_boots"],
-    "core": ["item_midas", "item_force_staff", "item_glimmer_cape"],
+    "core": ["item_hand_of_midas", "item_force_staff", "item_glimmer_cape"],
     "late": ["item_sheepstick", "item_lotus_orb", "item_heart"],
     "situational": {
       "magic_burst": ["item_pipe"],
@@ -234,7 +234,7 @@
       "control_heavy": ["item_black_king_bar"],
       "gap_close": ["item_hurricane_pike"],
       "evasion": ["item_monkey_king_bar"],
-      "single_target_catch": ["item_linken_sphere"]
+      "single_target_catch": ["item_sphere"]
     }
   },
   "npc_dota_hero_queenofpain": {
@@ -242,10 +242,10 @@
     "role": "中单/法系核心",
     "lane": ["item_magic_wand", "item_power_treads"],
     "core": ["item_orchid", "item_black_king_bar", "item_ultimate_scepter"],
-    "late": ["item_sheepstick", "item_linken_sphere", "item_shivas_guard"],
+    "late": ["item_sheepstick", "item_sphere", "item_shivas_guard"],
     "situational": {
       "control_heavy": ["item_black_king_bar"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "physical_burst": ["item_shivas_guard"],
       "high_healing": ["item_spirit_vessel"]
     }
@@ -254,10 +254,10 @@
     "name": "风暴之灵",
     "role": "中单/法系核心",
     "lane": ["item_magic_wand", "item_power_treads"],
-    "core": ["item_orchid", "item_black_king_bar", "item_linken_sphere"],
+    "core": ["item_orchid", "item_black_king_bar", "item_sphere"],
     "late": ["item_sheepstick", "item_bloodthorn", "item_shivas_guard"],
     "situational": {
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "control_heavy": ["item_black_king_bar"],
       "silence_heavy": ["item_black_king_bar"],
       "evasion": ["item_bloodthorn"]
@@ -271,7 +271,7 @@
     "late": ["item_sheepstick", "item_ultimate_scepter", "item_refresher"],
     "situational": {
       "control_heavy": ["item_black_king_bar"],
-      "single_target_catch": ["item_linken_sphere"],
+      "single_target_catch": ["item_sphere"],
       "physical_burst": ["item_shivas_guard"],
       "gap_close": ["item_blink", "item_force_staff"]
     }
@@ -293,13 +293,13 @@
     "name": "裂魂人",
     "role": "游走/先手",
     "lane": ["item_magic_wand", "item_phase_boots"],
-    "core": ["item_shadow_blade", "item_black_king_bar", "item_harpoon"],
+    "core": ["item_invis_sword", "item_black_king_bar", "item_harpoon"],
     "late": ["item_silver_edge", "item_assault", "item_heart"],
     "situational": {
       "control_heavy": ["item_black_king_bar"],
       "evasion": ["item_monkey_king_bar"],
       "physical_burst": ["item_assault"],
-      "single_target_catch": ["item_linken_sphere"]
+      "single_target_catch": ["item_sphere"]
     }
   },
   "npc_dota_hero_earthshaker": {

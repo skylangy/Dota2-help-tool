@@ -7,10 +7,10 @@ let localServer;
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1180,
-    height: 760,
-    minWidth: 960,
-    minHeight: 620,
+    width: 1320,
+    height: 840,
+    minWidth: 1024,
+    minHeight: 640,
     title: "Dota 2 Help Tool",
     backgroundColor: "#f5f2ea",
     webPreferences: {
@@ -38,18 +38,21 @@ function setCompactMode(enabled) {
 
   if (enabled) {
     const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
-    const width = 380;
-    const height = 520;
+    const width = 280;
+    const height = 340;
     const x = display.workArea.x + display.workArea.width - width - 12;
     const y = display.workArea.y + Math.round((display.workArea.height - height) / 2);
-    mainWindow.setAlwaysOnTop(true, "normal");
     mainWindow.setResizable(false);
+    // Lower the minimum first, otherwise setSize is clamped to the main-window minWidth.
+    mainWindow.setMinimumSize(width, height);
     mainWindow.setSize(width, height);
+    mainWindow.setAlwaysOnTop(true, "normal");
     mainWindow.setPosition(x, y);
   } else {
     mainWindow.setAlwaysOnTop(false);
     mainWindow.setResizable(true);
-    mainWindow.setSize(1180, 760);
+    mainWindow.setMinimumSize(1024, 640);
+    mainWindow.setSize(1320, 840);
     mainWindow.center();
   }
 

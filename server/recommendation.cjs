@@ -40,7 +40,7 @@ const genericBuilds = {
     situational: {
       control_heavy: ["item_black_king_bar", "item_manta"],
       magic_burst: ["item_black_king_bar"],
-      single_target_catch: ["item_linken_sphere"],
+      single_target_catch: ["item_sphere"],
       evasion: ["item_monkey_king_bar"],
       tank_frontline: ["item_silver_edge"],
       illusion_enemy: ["item_bfury", "item_shivas_guard"]
@@ -56,7 +56,7 @@ const genericBuilds = {
       control_heavy: ["item_black_king_bar"],
       magic_burst: ["item_black_king_bar"],
       gap_close: ["item_hurricane_pike", "item_force_staff"],
-      single_target_catch: ["item_linken_sphere"],
+      single_target_catch: ["item_sphere"],
       evasion: ["item_monkey_king_bar"]
     }
   },
@@ -70,7 +70,7 @@ const genericBuilds = {
       control_heavy: ["item_force_staff", "item_lotus_orb"],
       magic_burst: ["item_glimmer_cape", "item_pipe"],
       physical_burst: ["item_force_staff", "item_glimmer_cape"],
-      single_target_catch: ["item_lotus_orb", "item_linken_sphere"],
+      single_target_catch: ["item_lotus_orb", "item_sphere"],
       high_healing: ["item_spirit_vessel"],
       silence_heavy: ["item_lotus_orb"]
     }
@@ -85,7 +85,7 @@ const genericBuilds = {
       control_heavy: ["item_black_king_bar"],
       magic_burst: ["item_pipe", "item_black_king_bar"],
       physical_burst: ["item_shivas_guard"],
-      single_target_catch: ["item_lotus_orb", "item_linken_sphere"],
+      single_target_catch: ["item_lotus_orb", "item_sphere"],
       armor_needed: ["item_shivas_guard"],
       dispel_needed: ["item_lotus_orb"]
     }
@@ -95,11 +95,11 @@ const genericBuilds = {
     role: "法系核心",
     lane: ["item_magic_wand", "item_power_treads"],
     core: ["item_aether_lens", "item_blink", "item_black_king_bar"],
-    late: ["item_ultimate_scepter", "item_linken_sphere"],
+    late: ["item_ultimate_scepter", "item_sphere"],
     situational: {
       control_heavy: ["item_black_king_bar"],
       magic_burst: ["item_black_king_bar"],
-      single_target_catch: ["item_linken_sphere"],
+      single_target_catch: ["item_sphere"],
       gap_close: ["item_force_staff", "item_blink"],
       silence_heavy: ["item_black_king_bar"]
     }
@@ -110,7 +110,7 @@ const globalSituational = {
   control_heavy: ["item_black_king_bar", "item_lotus_orb", "item_manta"],
   magic_burst: ["item_black_king_bar", "item_pipe", "item_glimmer_cape"],
   physical_burst: ["item_shivas_guard", "item_ghost", "item_crimson_guard"],
-  single_target_catch: ["item_linken_sphere", "item_lotus_orb", "item_black_king_bar"],
+  single_target_catch: ["item_sphere", "item_lotus_orb", "item_black_king_bar"],
   evasion: ["item_monkey_king_bar", "item_bloodthorn"],
   tank_frontline: ["item_silver_edge", "item_skadi", "item_assault"],
   gap_close: ["item_force_staff", "item_hurricane_pike", "item_blink"],
@@ -186,8 +186,12 @@ function uniqueItems(...groups) {
   return [...new Set(groups.flat().filter(Boolean))];
 }
 
-function pickSituational(build, inventory, threats) {
+// Pick up to `limit` counter items, one per threat (highest-priority threats first),
+// never repeating an item the player already owns or that another pick already used.
+function pickSituational(build, inventory, threats, limit = 2) {
   const uncoveredThreats = [];
+  const picks = [];
+  const usedItems = new Set();
 
   for (const threat of threats) {
     const options = uniqueItems(build.situational?.[threat] ?? [], globalSituational[threat] ?? []);
@@ -196,27 +200,43 @@ function pickSituational(build, inventory, threats) {
       continue;
     }
 
-    const missing = firstMissing(options, inventory);
+    const missing = options.find((itemId) => !hasItem(inventory, itemId) && !usedItems.has(itemId));
     if (missing) {
-      return {
+      usedItems.add(missing);
+      picks.push({
         item: missing,
         reason: `${threatLabels[threat] ?? "当前局势"}，这件装备能更直接解决本局最危险的问题。`,
-        matchedThreat: threat,
-        uncoveredThreats
-      };
+        matchedThreat: threat
+      });
+      if (picks.length >= limit) break;
     }
   }
 
-  return { item: null, matchedThreat: null, uncoveredThreats };
+  return { picks, uncoveredThreats };
 }
 
-function buildSuggestion(itemId, priority, reason) {
+function itemCost(itemId) {
+  return Number(getItemProfile(itemId)?.cost ?? 0);
+}
+
+// Append a gold-awareness hint using the public OpenDota item cost and the player's current gold.
+function buildSuggestion(itemId, priority, reason, gold = 0) {
+  const cost = itemCost(itemId);
+  const affordable = cost > 0 ? gold >= cost : null;
+  let goldNote = "";
+  if (cost > 0) {
+    goldNote = affordable
+      ? `（约 ${cost} 金，现在买得起）`
+      : `（约 ${cost} 金，还差 ${cost - Math.max(0, Math.floor(gold))}）`;
+  }
   return {
     itemId,
     itemName: itemName(itemId),
     imageUrl: itemImage(itemId),
     priority,
-    reason
+    reason: goldNote ? `${reason}${goldNote}` : reason,
+    cost,
+    affordable
   };
 }
 
@@ -225,16 +245,25 @@ function buildThreatNotes(threats, situational) {
     return ["未选择额外局势标签，使用默认路线。"];
   }
 
+  const matched = (situational?.picks ?? []).map((pick) => pick.matchedThreat);
+  const matchedSet = new Set(matched);
   const uncovered = new Set(situational?.uncoveredThreats ?? []);
-  const coveredThreats = threats.filter((key) => !uncovered.has(key));
+  const label = (key) => threatLabels[key] ?? key;
+  // Only the matched threats actually produced a counter item this round; be explicit so the
+  // tool never claims to have "handled" a threat it merely identified.
+  const others = threats.filter((key) => !matchedSet.has(key) && !uncovered.has(key));
   const notes = [];
 
-  if (coveredThreats.length > 0) {
-    notes.push(`已考虑局势：${coveredThreats.map((key) => threatLabels[key] ?? key).join("、")}`);
+  if (matched.length > 0) {
+    notes.push(`本次针对：${matched.map(label).join("、")}（已给出对应装备）`);
+  }
+
+  if (others.length > 0) {
+    notes.push(`其余已识别局势（本次未单独出装，可后续按金钱补）：${others.map(label).join("、")}`);
   }
 
   if (uncovered.size > 0) {
-    notes.push(`暂无对应出装建议：${[...uncovered].map((key) => threatLabels[key] ?? key).join("、")}`);
+    notes.push(`暂无对应出装建议：${[...uncovered].map(label).join("、")}`);
   }
 
   return notes;
@@ -258,30 +287,33 @@ function recommend(gameState, context = {}) {
     };
   }
 
+  const gold = Number(gameState.gold ?? 0);
   const phase = getPhase(gameState.gameTime, gameState.level);
   const situational = pickSituational(build, inventory, threats);
   const phasePlan = build[phase] ?? build.core;
   const defaultNext = firstMissing(phasePlan, inventory) ?? firstMissing(build.core, inventory) ?? firstMissing(build.late, inventory);
   const suggestions = [];
+  const pickedItems = situational.picks.map((pick) => pick.item);
 
-  if (situational.item) {
-    suggestions.push(buildSuggestion(situational.item, "high", situational.reason));
-  }
+  situational.picks.forEach((pick, index) => {
+    suggestions.push(buildSuggestion(pick.item, index === 0 ? "high" : "medium", pick.reason, gold));
+  });
 
-  if (defaultNext && defaultNext !== situational.item) {
+  if (defaultNext && !pickedItems.includes(defaultNext)) {
     const reason = phase === "lane"
       ? "对线期优先补齐基础战斗力、续航和移动能力，降低新手期的容错压力。"
       : phase === "core"
         ? "这是当前定位的核心节奏装，通常能明显提升参战、刷钱或生存效率。"
         : "比赛进入后期，优先补强生存、输出或控制来提高团战稳定性。";
-    suggestions.push(buildSuggestion(defaultNext, situational.item ? "medium" : "high", reason));
+    suggestions.push(buildSuggestion(defaultNext, pickedItems.length > 0 ? "medium" : "high", reason, gold));
   }
 
   if (suggestions.length === 0) {
     suggestions.push(buildSuggestion(
       "item_black_king_bar",
       "medium",
-      "当前路线已基本成型。如果团战容易被控制打断，黑皇杖通常是可靠的兜底选择。"
+      "当前路线已基本成型。如果团战容易被控制打断，黑皇杖通常是可靠的兜底选择。",
+      gold
     ));
   }
 

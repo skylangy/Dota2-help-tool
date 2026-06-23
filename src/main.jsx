@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
@@ -16,6 +16,9 @@ import {
   RefreshCw,
   Settings,
   Shield,
+  Smartphone,
+  Volume2,
+  VolumeX,
   Wifi,
   WifiOff
 } from "lucide-react";
@@ -292,6 +295,84 @@ function useLaunchOptionReminder() {
   };
 }
 
+function usePhone() {
+  const [phone, setPhone] = useState(null);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+
+  async function refreshPhone() {
+    try {
+      setPhone(await requestJson("/api/phone/status"));
+    } catch (error) {
+      setPhoneError(error.message);
+    }
+  }
+
+  async function enablePhone() {
+    setPhoneBusy(true);
+    setPhoneError("");
+    try {
+      setPhone(await postJson("/api/phone/enable"));
+    } catch (error) {
+      setPhoneError(error.message);
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
+  async function disablePhone() {
+    setPhoneBusy(true);
+    setPhoneError("");
+    try {
+      setPhone(await postJson("/api/phone/disable"));
+    } catch (error) {
+      setPhoneError(error.message);
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshPhone();
+  }, []);
+
+  return { phone, phoneBusy, phoneError, enablePhone, disablePhone };
+}
+
+// Hands-free coach: speaks the top suggestion via the browser's built-in speech synthesis.
+// Pure client-side audio — no game interaction, nothing drawn on screen.
+function useVoiceCoach(recommendation) {
+  const [voiceEnabled, setVoiceEnabled] = useState(() => (
+    window.localStorage.getItem("dota2-help-tool-voice") === "true"
+  ));
+  const lastSpoken = useRef("");
+
+  function toggleVoice() {
+    setVoiceEnabled((prev) => {
+      const next = !prev;
+      window.localStorage.setItem("dota2-help-tool-voice", String(next));
+      if (!next) {
+        window.speechSynthesis?.cancel();
+      }
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    const top = recommendation.suggestions?.[0];
+    if (!top?.itemName) return;
+    if (top.itemName === lastSpoken.current) return;
+    lastSpoken.current = top.itemName;
+    const utterance = new window.SpeechSynthesisUtterance(`建议出${top.itemName}`);
+    utterance.lang = "zh-CN";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, [voiceEnabled, recommendation.suggestions]);
+
+  return { voiceEnabled, toggleVoice };
+}
+
 function StatusBadge({ connected }) {
   return (
     <div className={connected ? "status connected" : "status"}>
@@ -428,6 +509,84 @@ function LaunchOptionDialog({ onClose, open }) {
         <p className="compact-safety">
           工具不会自动修改 Steam 配置；这样更透明，也更符合安全边界。
         </p>
+      </section>
+    </div>
+  );
+}
+
+function PhoneDialog({ open, phone, phoneBusy, phoneError, onEnable, onDisable, onClose }) {
+  const [copied, setCopied] = useState("");
+
+  if (!open) return null;
+
+  const enabled = phone?.enabled;
+  const urls = phone?.urls ?? [];
+
+  async function copy(text) {
+    try {
+      if (window.dota2HelpTool?.copyText) {
+        await window.dota2HelpTool.copyText(text);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setCopied(text);
+    } catch {
+      setCopied("");
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="phone-title">
+        <div className="panel-title">
+          <Smartphone size={18} />
+          <h2 id="phone-title">手机查看</h2>
+        </div>
+        <p className="setup-copy">
+          在手机上打开下面的链接（手机要和电脑连同一个 Wi-Fi），就能实时看到推荐。链接里已经带好一次性 PIN，无需手动输入。
+        </p>
+
+        {phoneBusy && !enabled ? <p className="setup-copy">正在自动寻找空闲端口并开启…</p> : null}
+
+        {enabled ? (
+          urls.length > 0 ? (
+            <>
+              {phone.qr ? (
+                <div className="phone-qr-wrap">
+                  <img className="phone-qr" src={phone.qr} alt="扫码打开手机查看" />
+                  <p className="phone-qr-caption">用手机相机直接扫码打开（手机与电脑同一 Wi-Fi）</p>
+                </div>
+              ) : null}
+              <div className="phone-url-row">
+                <code className="launch-command">{phone.primaryUrl}</code>
+                <button className="ghost-button" type="button" onClick={() => copy(phone.primaryUrl)}>
+                  <FolderCheck size={16} />
+                  {copied === phone.primaryUrl ? "已复制" : "扫不了？复制链接"}
+                </button>
+              </div>
+              <p className="setup-copy">端口 {phone.port} · PIN {phone.pin}</p>
+              <button className="ghost-button" type="button" onClick={onDisable} disabled={phoneBusy}>
+                {phoneBusy ? <RefreshCw className="spin" size={16} /> : <WifiOff size={16} />}
+                关闭手机查看
+              </button>
+            </>
+          ) : (
+            <p className="setup-error">没找到局域网地址，请确认电脑已连上 Wi-Fi 或网线。</p>
+          )
+        ) : (
+          <button className="primary-button" type="button" onClick={onEnable} disabled={phoneBusy}>
+            {phoneBusy ? <RefreshCw className="spin" size={17} /> : <Smartphone size={17} />}
+            开启手机查看
+          </button>
+        )}
+
+        {phoneError ? <p className="setup-error">{phoneError}</p> : null}
+        <p className="compact-safety">
+          首次开启时 Windows 防火墙可能会弹窗，请点「允许」。这是只读视图，不读内存、不注入、不自动操作。
+        </p>
+        <div className="modal-actions">
+          <button className="ghost-button" type="button" onClick={onClose}>关闭窗口</button>
+        </div>
       </section>
     </div>
   );
@@ -848,45 +1007,43 @@ function ReplayItems({ items = [] }) {
   );
 }
 
-function CompactPanel({ connected, gameState, recommendation, onExitCompact, onLoadMock }) {
+function CompactPanel({ recommendation, onExitCompact }) {
   const first = recommendation.suggestions?.[0];
   const alternatives = (recommendation.suggestions ?? []).slice(1, 3);
 
   return (
-    <main className="app compact-app">
-      <header className="compact-header">
-        <div>
-          <p className="eyebrow">Dota 2 Help Tool</p>
-          <h1>{recommendation.heroName ?? "等待数据"}</h1>
-        </div>
-        <button className="icon-button" type="button" onClick={onExitCompact} aria-label="退出小窗模式" title="退出小窗模式">
-          <Maximize2 size={17} />
+    <main className="app compact-app compact-mini">
+      <header className="compact-mini-header">
+        <span className="compact-mini-hero">{recommendation.heroName ?? "等待 GSI"}</span>
+        <button className="icon-button compact-mini-restore" type="button" onClick={onExitCompact} aria-label="还原窗口" title="还原窗口">
+          <Maximize2 size={15} />
         </button>
       </header>
-      <StatusBadge connected={connected} />
-      <div className="compact-stats">
-        <Stat label="时间" value={formatTime(gameState.gameTime)} />
-        <Stat label="金钱" value={gameState.gold ?? 0} />
-      </div>
-      <section className="compact-card">
-        <GameIcon alt={first?.itemName ?? "item"} className="compact-item-art" fallback={abbrev(first?.itemName)} src={first?.imageUrl || itemImageFromId(first?.itemId)} />
-        <span>{first ? priorityLabels[first.priority] : "等待"}</span>
-        <h2>{first?.itemName ?? recommendation.title ?? "等待 Dota 2 GSI 数据"}</h2>
-        <p>{first?.reason ?? recommendation.notes?.[0] ?? "进入比赛后显示建议。"}</p>
+      <section className="compact-next">
+        <span className="compact-label">下一件</span>
+        {first ? (
+          <div className="compact-next-item">
+            <GameIcon alt={first.itemName} className="compact-item-art" fallback={abbrev(first.itemName)} src={first.imageUrl || itemImageFromId(first.itemId)} />
+            <strong>{first.itemName}</strong>
+          </div>
+        ) : (
+          <p className="compact-empty">进入比赛后显示建议</p>
+        )}
       </section>
       {alternatives.length > 0 ? (
-        <div className="compact-alternatives">
-          <span>备选</span>
-          {alternatives.map((item) => (
-            <p key={item.itemId}>{item.itemName}</p>
-          ))}
-        </div>
+        <section className="compact-recommend">
+          <span className="compact-label">推荐</span>
+          <div className="compact-recommend-list">
+            {alternatives.map((item) => (
+              <span className="compact-chip" key={item.itemId}>
+                <GameIcon alt={item.itemName} className="compact-chip-icon" fallback={abbrev(item.itemName)} src={item.imageUrl || itemImageFromId(item.itemId)} />
+                {item.itemName}
+              </span>
+            ))}
+          </div>
+        </section>
       ) : null}
-      <button className="ghost-button" type="button" onClick={onLoadMock}>
-        <Play size={17} />
-        演示状态
-      </button>
-      <p className="compact-safety">普通置顶窗口，不注入、不读内存、不自动操作。</p>
+      <p className="compact-hint">独占全屏不显示，请用「无边框窗口」模式</p>
     </main>
   );
 }
@@ -899,7 +1056,10 @@ export default function App() {
   const { heroes, heroError, refreshHeroes } = useHeroCatalog();
   const { aiConfig, updateAiConfig } = useAiConfig();
   const { closeLaunchReminder, openLaunchReminder, resetLaunchReminder, showLaunchReminder } = useLaunchOptionReminder();
+  const { voiceEnabled, toggleVoice } = useVoiceCoach(snapshot?.recommendation ?? {});
+  const { phone, phoneBusy, phoneError, enablePhone, disablePhone } = usePhone();
   const [busy, setBusy] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
   const [compact, setCompact] = useState(false);
   const [prepareBusy, setPrepareBusy] = useState(false);
   const [prepareMessage, setPrepareMessage] = useState("");
@@ -971,11 +1131,8 @@ export default function App() {
   if (compact) {
     return (
       <CompactPanel
-        connected={connected}
-        gameState={gameState}
         recommendation={recommendation}
         onExitCompact={() => setCompactMode(false)}
-        onLoadMock={loadMock}
       />
     );
   }
@@ -983,12 +1140,44 @@ export default function App() {
   return (
     <main className="app">
       <LaunchOptionDialog open={showLaunchReminder} onClose={closeLaunchReminder} />
+      <PhoneDialog
+        open={showPhone}
+        phone={phone}
+        phoneBusy={phoneBusy}
+        phoneError={phoneError}
+        onEnable={enablePhone}
+        onDisable={disablePhone}
+        onClose={() => setShowPhone(false)}
+      />
       <header className="topbar">
         <div>
           <p className="eyebrow">Dota 2 Help Tool</p>
           <h1>实时装备建议</h1>
         </div>
         <div className="top-actions">
+          <button
+            className="ghost-button compact-toggle"
+            type="button"
+            onClick={() => {
+              setShowPhone(true);
+              if (!phone?.enabled) {
+                enablePhone();
+              }
+            }}
+            title="在手机上查看推荐"
+          >
+            <Smartphone size={17} />
+            手机查看
+          </button>
+          <button
+            className={voiceEnabled ? "ghost-button compact-toggle voice-on" : "ghost-button compact-toggle"}
+            type="button"
+            onClick={toggleVoice}
+            title="开关语音播报"
+          >
+            {voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            语音
+          </button>
           <button className="ghost-button compact-toggle" type="button" onClick={() => setCompactMode(true)}>
             <Minimize2 size={17} />
             边缘小窗
