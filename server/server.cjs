@@ -4,11 +4,12 @@ const http = require("node:http");
 const { WebSocketServer } = require("ws");
 const { parseGameState } = require("./gsi.cjs");
 const { recommend, threatLabels } = require("./recommendation.cjs");
-const { installConfig, scanSetup } = require("./setup.cjs");
+const { installConfig, readGsiToken, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
 const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
 const { inferThreats } = require("./lineup.cjs");
 const { fetchMatch } = require("./replay.cjs");
+const { appVersion } = require("./version.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -57,6 +58,7 @@ function diagnosticsSnapshot(state) {
   return {
     generatedAt: new Date().toISOString(),
     app: {
+      version: appVersion,
       host: DEFAULT_HOST,
       port: DEFAULT_PORT,
       gsiEndpoint: `http://${DEFAULT_HOST}:${DEFAULT_PORT}/gsi`,
@@ -66,6 +68,7 @@ function diagnosticsSnapshot(state) {
     },
     setup: {
       installed: setup.installed,
+      tokenConfigured: setup.tokenConfigured,
       installedTargets: setup.installedTargets ?? [],
       dotaConfigDirs: setup.dotaConfigDirs ?? []
     },
@@ -165,6 +168,12 @@ function createApp() {
   });
 
   app.post("/gsi", (req, res) => {
+    const expectedToken = readGsiToken();
+    if (expectedToken && req.body?.auth?.token !== expectedToken) {
+      res.sendStatus(401);
+      return;
+    }
+
     state.gameState = parseGameState(req.body);
     const autoEnemyHeroes = state.gameState.lineups?.enemies ?? [];
     if (autoEnemyHeroes.length > 0) {

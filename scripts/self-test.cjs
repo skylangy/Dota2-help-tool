@@ -1,5 +1,7 @@
 const assert = require("node:assert/strict");
 const { startServer } = require("../server/server.cjs");
+const { readGsiToken } = require("../server/setup.cjs");
+const { summarizeMatch } = require("../server/replay.cjs");
 
 const PORT = 3108;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -32,12 +34,33 @@ async function main() {
 
     const diagnosticsBefore = await request("/api/diagnostics");
     assert.equal(diagnosticsBefore.app.host, "127.0.0.1");
+    assert.match(diagnosticsBefore.app.version, /^\d+\.\d+\.\d+/);
     assert.equal(Array.isArray(diagnosticsBefore.safety.forbiddenCapabilities), true);
     assert.ok(diagnosticsBefore.safety.forbiddenCapabilities.some((line) => line.includes("No memory reading")));
 
     const mock = await request("/api/mock", { method: "POST" });
     assert.equal(mock.recommendation.status, "ready");
     assert.ok(mock.recommendation.suggestions.length > 0);
+
+    const invisibleContext = await request("/api/context", {
+      method: "POST",
+      body: JSON.stringify({
+        enemyHeroes: ["npc_dota_hero_riki", "npc_dota_hero_bounty_hunter", "npc_dota_hero_clinkz"],
+        manualThreats: []
+      })
+    });
+    assert.ok(invisibleContext.context.threats.includes("invisible_enemy"));
+    assert.ok(["item_dust", "item_ward_dispenser", "item_gem"].includes(invisibleContext.recommendation.suggestions[0].itemId));
+
+    const healingContext = await request("/api/context", {
+      method: "POST",
+      body: JSON.stringify({
+        enemyHeroes: ["npc_dota_hero_huskar", "npc_dota_hero_necrolyte"],
+        manualThreats: []
+      })
+    });
+    assert.ok(healingContext.context.threats.includes("high_healing"));
+    assert.ok(["item_spirit_vessel", "item_skadi", "item_shivas_guard"].includes(healingContext.recommendation.suggestions[0].itemId));
 
     const context = await request("/api/context", {
       method: "POST",
@@ -69,6 +92,7 @@ async function main() {
           dota_goodguys_tower1_mid: { health: 0 },
           dota_badguys_tower1_mid: { health: 1200 }
         },
+        auth: readGsiToken() ? { token: readGsiToken() } : undefined,
         allplayers: {
           player0: { team_name: "radiant", hero_name: "npc_dota_hero_juggernaut", player_slot: 1 },
           player1: { team_name: "radiant", hero_name: "npc_dota_hero_crystal_maiden", player_slot: 2 },
@@ -103,6 +127,33 @@ async function main() {
     const synced = await request("/api/data/sync", { method: "POST" });
     assert.ok(synced.heroCount > 100);
     assert.ok(synced.itemCount > 100);
+
+    const replay = summarizeMatch({
+      match_id: 123,
+      duration: 1800,
+      radiant_win: true,
+      players: [{
+        account_id: 1,
+        hero_id: 1,
+        isRadiant: true,
+        win: 1,
+        kills: 1,
+        deaths: 1,
+        assists: 1,
+        gold_per_min: 400,
+        xp_per_min: 500,
+        last_hits: 120,
+        hero_damage: 12000,
+        tower_damage: 1200,
+        item_0: 1,
+        item_6: 99991,
+        backpack_0: 99992,
+        item_neutral: 99993
+      }]
+    });
+    assert.ok(replay.players[0].items.includes("Item 99991"));
+    assert.ok(replay.players[0].items.includes("Item 99992"));
+    assert.ok(replay.players[0].items.includes("Item 99993"));
 
     const diagnosticsAfter = await request("/api/diagnostics");
     assert.equal(diagnosticsAfter.app.liveGsiReceived, true);

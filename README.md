@@ -15,6 +15,7 @@ Current features:
 
 - Electron desktop app for Windows.
 - Local GSI receiver at `http://127.0.0.1:3008/gsi`.
+- Optional local GSI auth token: one-click GSI setup writes a per-machine token into the Dota 2 GSI config and the local receiver validates it.
 - Real-time hero, time, level, gold, and item display.
 - Automatic next-item recommendation from your current GSI state.
 - Automatic enemy lineup detection when Dota 2 GSI provides `allplayers` data.
@@ -86,6 +87,7 @@ Sources:
 2. Open the app.
 3. Use the launch-test checklist at the top of the app.
 4. Click `Install GSI`.
+   - This writes a local GSI config and a per-machine auth token. It does not modify Steam launch options.
 5. In Steam, open Dota 2 Properties and add this launch option:
 
 ```text

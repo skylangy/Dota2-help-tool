@@ -106,6 +106,24 @@ const genericBuilds = {
   }
 };
 
+const globalSituational = {
+  control_heavy: ["item_black_king_bar", "item_lotus_orb", "item_manta"],
+  magic_burst: ["item_black_king_bar", "item_pipe", "item_glimmer_cape"],
+  physical_burst: ["item_shivas_guard", "item_ghost", "item_crimson_guard"],
+  single_target_catch: ["item_linken_sphere", "item_lotus_orb", "item_black_king_bar"],
+  evasion: ["item_monkey_king_bar", "item_bloodthorn"],
+  tank_frontline: ["item_silver_edge", "item_skadi", "item_assault"],
+  gap_close: ["item_force_staff", "item_hurricane_pike", "item_blink"],
+  kite: ["item_blink", "item_hurricane_pike", "item_force_staff", "item_harpoon"],
+  high_healing: ["item_spirit_vessel", "item_skadi", "item_shivas_guard"],
+  illusion_enemy: ["item_bfury", "item_maelstrom", "item_shivas_guard"],
+  invisible_enemy: ["item_dust", "item_ward_dispenser", "item_gem"],
+  silence_heavy: ["item_black_king_bar", "item_manta", "item_lotus_orb"],
+  mana_burn: ["item_manta", "item_black_king_bar", "item_lotus_orb"],
+  armor_needed: ["item_assault", "item_shivas_guard", "item_crimson_guard"],
+  dispel_needed: ["item_manta", "item_lotus_orb", "item_cyclone", "item_guardian_greaves"]
+};
+
 function itemName(itemId) {
   return items[itemId]?.name ?? itemId.replace(/^item_/, "");
 }
@@ -159,20 +177,32 @@ function inferGenericBuild(heroId) {
   return genericBuilds.caster;
 }
 
+function uniqueItems(...groups) {
+  return [...new Set(groups.flat().filter(Boolean))];
+}
+
 function pickSituational(build, inventory, threats) {
+  const uncoveredThreats = [];
+
   for (const threat of threats) {
-    const options = build.situational?.[threat] ?? [];
+    const options = uniqueItems(build.situational?.[threat] ?? [], globalSituational[threat] ?? []);
+    if (options.length === 0) {
+      uncoveredThreats.push(threat);
+      continue;
+    }
+
     const missing = firstMissing(options, inventory);
     if (missing) {
       return {
         item: missing,
         reason: `${threatLabels[threat] ?? "当前局势"}，这件装备能更直接解决本局最危险的问题。`,
-        matchedThreat: threat
+        matchedThreat: threat,
+        uncoveredThreats
       };
     }
   }
 
-  return null;
+  return { item: null, matchedThreat: null, uncoveredThreats };
 }
 
 function buildSuggestion(itemId, priority, reason) {
@@ -183,6 +213,26 @@ function buildSuggestion(itemId, priority, reason) {
     priority,
     reason
   };
+}
+
+function buildThreatNotes(threats, situational) {
+  if (threats.length === 0) {
+    return ["未选择额外局势标签，使用默认路线。"];
+  }
+
+  const uncovered = new Set(situational?.uncoveredThreats ?? []);
+  const coveredThreats = threats.filter((key) => !uncovered.has(key));
+  const notes = [];
+
+  if (coveredThreats.length > 0) {
+    notes.push(`已考虑局势：${coveredThreats.map((key) => threatLabels[key] ?? key).join("、")}`);
+  }
+
+  if (uncovered.size > 0) {
+    notes.push(`暂无对应出装建议：${[...uncovered].map((key) => threatLabels[key] ?? key).join("、")}`);
+  }
+
+  return notes;
 }
 
 function recommend(gameState, context = {}) {
@@ -209,17 +259,17 @@ function recommend(gameState, context = {}) {
   const defaultNext = firstMissing(phasePlan, inventory) ?? firstMissing(build.core, inventory) ?? firstMissing(build.late, inventory);
   const suggestions = [];
 
-  if (situational) {
+  if (situational.item) {
     suggestions.push(buildSuggestion(situational.item, "high", situational.reason));
   }
 
-  if (defaultNext && defaultNext !== situational?.item) {
+  if (defaultNext && defaultNext !== situational.item) {
     const reason = phase === "lane"
       ? "对线期优先补齐基础战斗力、续航和移动能力，降低新手期的容错压力。"
       : phase === "core"
         ? "这是当前定位的核心节奏装，通常能明显提升参战、刷钱或生存效率。"
         : "比赛进入后期，优先补强生存、输出或控制来提高团战稳定性。";
-    suggestions.push(buildSuggestion(defaultNext, situational ? "medium" : "high", reason));
+    suggestions.push(buildSuggestion(defaultNext, situational.item ? "medium" : "high", reason));
   }
 
   if (suggestions.length === 0) {
@@ -246,13 +296,15 @@ function recommend(gameState, context = {}) {
     suggestions: suggestions.slice(0, 3),
     notes: [
       `当前阶段：${phaseLabels[phase]}`,
-      threats.length > 0 ? `已考虑局势：${threats.map((key) => threatLabels[key] ?? key).join("、")}` : "未选择额外局势标签，使用默认路线。",
+      ...buildThreatNotes(threats, situational),
       sourceNote
     ]
   };
 }
 
 module.exports = {
+  genericBuilds,
+  globalSituational,
   heroBuilds,
   items,
   recommend,

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0
+
+- Added global fallback item mappings for every inferred threat tag, including invisibility, high healing, mana burn, kiting, and dispel needs.
+- Made recommendation notes honest when a threat has no mapped item instead of claiming it was handled.
+- Memoized the OpenDota public data cache by file mtime to avoid repeated synchronous JSON parsing during live GSI updates.
+- Unified app version reporting and OpenDota User-Agent values from `package.json`.
+- Included backpack slots, item_6-8, and neutral items in replay summaries.
+- Added optional local GSI auth-token generation and validation after one-click setup.
+
 ## 0.12.0
 
 - Added a launch-option reminder dialog after one-click preparation.

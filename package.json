@@ -1,6 +1,6 @@
 {
   "name": "dota2-help-tool",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": false,
   "description": "A safe local Dota 2 learning assistant that uses Game State Integration for item suggestions.",
   "author": "Dota 2 Help Tool contributors",

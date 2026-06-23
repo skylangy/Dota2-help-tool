@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { userAgent } = require("./version.cjs");
 
 const SOURCES = {
   heroes: "https://api.opendota.com/api/constants/heroes",
@@ -16,18 +17,48 @@ function getCacheFile() {
   return path.join(getCacheDir(), "public-data-cache.json");
 }
 
+let memoizedCache = {
+  file: null,
+  mtimeMs: null,
+  payload: null
+};
+
 function readCache() {
   const file = getCacheFile();
-  if (!fs.existsSync(file)) {
+  let stat = null;
+  try {
+    stat = fs.statSync(file);
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+    memoizedCache = { file, mtimeMs: null, payload: null };
     return null;
   }
 
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  if (memoizedCache.file === file && memoizedCache.mtimeMs === stat.mtimeMs) {
+    return memoizedCache.payload;
+  }
+
+  const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  memoizedCache = {
+    file,
+    mtimeMs: stat.mtimeMs,
+    payload
+  };
+  return payload;
 }
 
 function writeCache(payload) {
   fs.mkdirSync(getCacheDir(), { recursive: true });
-  fs.writeFileSync(getCacheFile(), JSON.stringify(payload, null, 2), "utf8");
+  const file = getCacheFile();
+  fs.writeFileSync(file, JSON.stringify(payload, null, 2), "utf8");
+  const stat = fs.statSync(file);
+  memoizedCache = {
+    file,
+    mtimeMs: stat.mtimeMs,
+    payload
+  };
 }
 
 function summarizePayload(heroes, items) {
@@ -88,7 +119,7 @@ async function fetchJson(url) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Dota2HelpTool/0.10.0"
+        "User-Agent": userAgent
       }
     });
 

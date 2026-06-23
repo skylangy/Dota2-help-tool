@@ -1,8 +1,12 @@
 const fs = require("node:fs");
+const crypto = require("node:crypto");
+const os = require("node:os");
 const path = require("node:path");
 
 const CONFIG_FILE = "gamestate_integration_dota2_help_tool.cfg";
 const TEMPLATE_PATH = path.resolve(__dirname, "..", "config", CONFIG_FILE);
+const TOKEN_FILE = "gsi-token.txt";
+const TOKEN_PLACEHOLDER = "{{GSI_TOKEN}}";
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
@@ -52,6 +56,41 @@ function getDotaConfigDir(libraryRoot) {
   );
 }
 
+function getAppDataDir() {
+  const appData = process.env.APPDATA || path.join(os.homedir(), ".config");
+  return path.join(appData, "Dota2HelpTool");
+}
+
+function getTokenFile() {
+  return path.join(getAppDataDir(), TOKEN_FILE);
+}
+
+function readGsiToken() {
+  try {
+    const token = fs.readFileSync(getTokenFile(), "utf8").trim();
+    return token || null;
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+    return null;
+  }
+}
+
+function ensureGsiToken() {
+  const existing = readGsiToken();
+  if (existing) return existing;
+
+  fs.mkdirSync(getAppDataDir(), { recursive: true });
+  const token = crypto.randomBytes(24).toString("hex");
+  fs.writeFileSync(getTokenFile(), token, "utf8");
+  return token;
+}
+
+function renderConfig(token) {
+  return fs.readFileSync(TEMPLATE_PATH, "utf8").replaceAll(TOKEN_PLACEHOLDER, token);
+}
+
 function scanSetup() {
   const libraries = findLibraryRoots();
   const dotaConfigDirs = libraries
@@ -66,6 +105,7 @@ function scanSetup() {
     configFile: CONFIG_FILE,
     endpoint: "http://127.0.0.1:3008/gsi",
     templatePath: TEMPLATE_PATH,
+    tokenConfigured: Boolean(readGsiToken()),
     steamLibraries: libraries,
     dotaConfigDirs,
     installed: installedTargets.length > 0,
@@ -82,10 +122,12 @@ function installConfig() {
   }
 
   const written = [];
+  const token = ensureGsiToken();
+  const configText = renderConfig(token);
   for (const dir of status.dotaConfigDirs) {
     fs.mkdirSync(dir, { recursive: true });
     const target = path.join(dir, CONFIG_FILE);
-    fs.copyFileSync(TEMPLATE_PATH, target);
+    fs.writeFileSync(target, configText, "utf8");
     written.push(target);
   }
 
@@ -96,6 +138,8 @@ function installConfig() {
 }
 
 module.exports = {
+  ensureGsiToken,
+  readGsiToken,
   installConfig,
   scanSetup
 };

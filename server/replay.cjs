@@ -1,4 +1,5 @@
 const { getPublicDataCache } = require("./public-data.cjs");
+const { userAgent } = require("./version.cjs");
 
 function formatDuration(seconds = 0) {
   const minutes = Math.floor(seconds / 60);
@@ -14,8 +15,16 @@ function buildLookups() {
 }
 
 function playerItems(player, itemsById) {
-  return [0, 1, 2, 3, 4, 5]
-    .map((slot) => player[`item_${slot}`])
+  const inventorySlots = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const backpackSlots = [0, 1, 2].map((slot) => player[`backpack_${slot}`]);
+  const neutralItem = player.item_neutral ?? player.neutral_item ?? player.item_9;
+  const itemIds = [
+    ...inventorySlots.map((slot) => player[`item_${slot}`]),
+    ...backpackSlots,
+    neutralItem
+  ];
+
+  return itemIds
     .filter((id) => Number(id) > 0)
     .map((id) => itemsById.get(id) ?? `Item ${id}`);
 }
@@ -28,7 +37,7 @@ function diagnosePlayer(player, durationMinutes) {
   const lastHits = player.last_hits ?? 0;
   const heroDamage = player.hero_damage ?? 0;
   const towerDamage = player.tower_damage ?? 0;
-  const itemCount = [0, 1, 2, 3, 4, 5].filter((slot) => Number(player[`item_${slot}`]) > 0).length;
+  const itemCount = playerItems(player, new Map()).length;
 
   if (deaths >= 10) {
     issues.push("死亡偏多，优先复盘站位、视野和保命装时机。");
@@ -127,7 +136,7 @@ async function fetchMatch(matchId) {
 
   const response = await fetch(`https://api.opendota.com/api/matches/${matchId}`, {
     headers: {
-      "User-Agent": "Dota2HelpTool/0.5.0"
+      "User-Agent": userAgent
     }
   });
 
