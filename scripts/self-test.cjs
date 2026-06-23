@@ -154,6 +154,8 @@ async function main() {
     assert.ok(replay.players[0].items.includes("Item 99991"));
     assert.ok(replay.players[0].items.includes("Item 99992"));
     assert.ok(replay.players[0].items.includes("Item 99993"));
+    assert.ok(replay.players[0].itemSlots.some((item) => item.slotLabel === "后备" && item.name === "Item 99991"));
+    assert.ok(replay.players[0].itemSlots.some((item) => item.slotLabel === "中立" && item.name === "Item 99993"));
 
     const diagnosticsAfter = await request("/api/diagnostics");
     assert.equal(diagnosticsAfter.app.liveGsiReceived, true);

@@ -14,19 +14,34 @@ function buildLookups() {
   return { heroesById, itemsById };
 }
 
-function playerItems(player, itemsById) {
-  const inventorySlots = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  const backpackSlots = [0, 1, 2].map((slot) => player[`backpack_${slot}`]);
-  const neutralItem = player.item_neutral ?? player.neutral_item ?? player.item_9;
-  const itemIds = [
-    ...inventorySlots.map((slot) => player[`item_${slot}`]),
-    ...backpackSlots,
-    neutralItem
-  ];
+function playerItemSlots(player, itemsById) {
+  const mainSlots = [0, 1, 2, 3, 4, 5].map((slot) => ({
+    id: player[`item_${slot}`],
+    slot: `item_${slot}`,
+    slotLabel: "主栏"
+  }));
+  const backpackFromItems = [6, 7, 8].map((slot) => ({
+    id: player[`item_${slot}`],
+    slot: `item_${slot}`,
+    slotLabel: "后备"
+  }));
+  const backpackSlots = [0, 1, 2].map((slot) => ({
+    id: player[`backpack_${slot}`],
+    slot: `backpack_${slot}`,
+    slotLabel: "后备"
+  }));
+  const neutral = {
+    id: player.item_neutral ?? player.neutral_item ?? player.item_9,
+    slot: "neutral",
+    slotLabel: "中立"
+  };
 
-  return itemIds
-    .filter((id) => Number(id) > 0)
-    .map((id) => itemsById.get(id) ?? `Item ${id}`);
+  return [...mainSlots, ...backpackFromItems, ...backpackSlots, neutral]
+    .filter((item) => Number(item.id) > 0)
+    .map((item) => ({
+      ...item,
+      name: itemsById.get(item.id) ?? `Item ${item.id}`
+    }));
 }
 
 function diagnosePlayer(player, durationMinutes) {
@@ -37,7 +52,7 @@ function diagnosePlayer(player, durationMinutes) {
   const lastHits = player.last_hits ?? 0;
   const heroDamage = player.hero_damage ?? 0;
   const towerDamage = player.tower_damage ?? 0;
-  const itemCount = playerItems(player, new Map()).length;
+  const itemCount = playerItemSlots(player, new Map()).length;
 
   if (deaths >= 10) {
     issues.push("死亡偏多，优先复盘站位、视野和保命装时机。");
@@ -83,6 +98,7 @@ function summarizeMatch(match) {
     const kills = player.kills ?? 0;
     const deaths = player.deaths ?? 0;
     const assists = player.assists ?? 0;
+    const itemSlots = playerItemSlots(player, itemsById);
     return {
       accountId: player.account_id ?? null,
       heroId: player.hero_id,
@@ -98,7 +114,8 @@ function summarizeMatch(match) {
       lastHits: player.last_hits ?? 0,
       heroDamage: player.hero_damage ?? 0,
       towerDamage: player.tower_damage ?? 0,
-      items: playerItems(player, itemsById),
+      itemSlots,
+      items: itemSlots.map((item) => item.name),
       issues: diagnosePlayer(player, durationMinutes)
     };
   });

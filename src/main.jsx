@@ -814,6 +814,7 @@ function ReplayPanel() {
                 <div>
                   <strong>{player.heroName}</strong>
                   <p>{player.issues.join(" ")}</p>
+                  <ReplayItems items={player.itemSlots ?? player.items ?? []} />
                 </div>
                 <span>{player.kda}</span>
                 <span>{player.gpm} GPM</span>
@@ -823,6 +824,27 @@ function ReplayPanel() {
         </div>
       ) : null}
     </aside>
+  );
+}
+
+function ReplayItems({ items = [] }) {
+  if (!items.length) {
+    return <p className="replay-items-empty">暂无装备数据</p>;
+  }
+
+  return (
+    <div className="replay-items" aria-label="复盘装备">
+      {items.map((item, index) => {
+        const name = typeof item === "string" ? item : item.name;
+        const slot = typeof item === "string" ? "" : item.slotLabel;
+        return (
+          <span className="replay-item-chip" key={`${name}-${slot}-${index}`}>
+            {slot ? <em>{slot}</em> : null}
+            {name}
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

@@ -827,6 +827,38 @@ h2 {
   background: rgba(21, 89, 68, 0.28);
 }
 
+.replay-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.replay-item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 3px 6px;
+  border: 1px solid rgba(137, 158, 158, 0.14);
+  border-radius: 6px;
+  color: #dce8e6;
+  background: #0f171b;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.replay-item-chip em,
+.replay-items-empty {
+  color: #7f908f;
+  font-style: normal;
+}
+
+.replay-items-empty {
+  margin-top: 7px;
+  font-size: 12px;
+}
+
 .compact-app {
   width: 100vw;
   min-height: 100vh;

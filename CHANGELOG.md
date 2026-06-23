@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.1
+
+- Render post-match player items in the replay UI, including backpack and neutral item slot labels when available.
+- Added dedicated recommendation unit tests for threat fallback coverage, phase boundaries, and inventory normalization.
+- Fixed inventory normalization so item names without the `item_` prefix are treated consistently.
+
 ## 0.13.0
 
 - Added global fallback item mappings for every inferred threat tag, including invisibility, high healing, mana burn, kiting, and dispel needs.

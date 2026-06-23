@@ -139,7 +139,12 @@ function itemImage(itemId) {
 }
 
 function normalizeInventory(rawItems = []) {
-  return rawItems.filter(Boolean).map((item) => item.replace(/^item_/, "item_"));
+  return rawItems
+    .filter(Boolean)
+    .map((item) => {
+      const value = String(item);
+      return value.startsWith("item_") ? value : `item_${value}`;
+    });
 }
 
 function hasItem(inventory, itemId) {
@@ -308,5 +313,10 @@ module.exports = {
   heroBuilds,
   items,
   recommend,
-  threatLabels
+  threatLabels,
+  _internals: {
+    getPhase,
+    normalizeInventory,
+    pickSituational
+  }
 };
