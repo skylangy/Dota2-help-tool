@@ -395,16 +395,10 @@ function LaunchChecklist({
   connected,
   dataStatus,
   gameState,
-  onCompact,
-  onInstall,
-  onMock,
   onPrepare,
-  onSync,
   prepareBusy,
   prepareMessage,
-  setup,
-  setupBusy,
-  dataBusy
+  setup
 }) {
   const hasLiveData = Boolean(gameState?.receivedAt);
   const readyCount = [
@@ -430,23 +424,7 @@ function LaunchChecklist({
       <div className="check-actions">
         <button className="primary-button" type="button" onClick={onPrepare} disabled={prepareBusy}>
           {prepareBusy ? <RefreshCw className="spin" size={17} /> : <FolderCheck size={17} />}
-          一键准备
-        </button>
-        <button className="ghost-button compact-toggle" type="button" onClick={onInstall} disabled={setupBusy}>
-          {setupBusy ? <RefreshCw className="spin" size={17} /> : <FolderCheck size={17} />}
-          安装 GSI
-        </button>
-        <button className="ghost-button compact-toggle" type="button" onClick={onSync} disabled={dataBusy}>
-          {dataBusy ? <RefreshCw className="spin" size={17} /> : <Cloud size={17} />}
-          同步数据
-        </button>
-        <button className="ghost-button compact-toggle" type="button" onClick={onMock}>
-          <Play size={17} />
-          演示
-        </button>
-        <button className="ghost-button compact-toggle" type="button" onClick={onCompact}>
-          <Minimize2 size={17} />
-          小窗
+          一键准备（装 GSI + 同步数据）
         </button>
       </div>
     </section>
@@ -1188,21 +1166,12 @@ export default function App() {
 
       <LaunchChecklist
         connected={connected}
-        dataBusy={dataBusy}
         dataStatus={dataStatus}
         gameState={gameState}
-        onCompact={() => setCompactMode(true)}
-        onInstall={installSetup}
-        onMock={loadMock}
         onPrepare={preparePlayerSetup}
-        onSync={async () => {
-          await syncData();
-          await refreshHeroes();
-        }}
         prepareBusy={prepareBusy}
         prepareMessage={prepareMessage}
         setup={setup}
-        setupBusy={setupBusy}
       />
 
       <section className="workspace">
