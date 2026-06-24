@@ -3,7 +3,8 @@ const cors = require("cors");
 const http = require("node:http");
 const { WebSocketServer } = require("ws");
 const { parseGameState } = require("./gsi.cjs");
-const { recommend, threatLabels } = require("./recommendation.cjs");
+const { recommend, threatLabels, heroBuilds } = require("./recommendation.cjs");
+const { ensureHeroBuild } = require("./item-popularity.cjs");
 const { installConfig, readGsiToken, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
 const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
@@ -182,6 +183,11 @@ function createApp() {
     }
 
     state.gameState = parseGameState(req.body);
+    // Lazily fetch real item-popularity data for non-curated heroes; re-broadcast when it lands.
+    const heroId = state.gameState.hero?.id;
+    if (heroId && !heroBuilds[heroId]) {
+      ensureHeroBuild(heroId).then((build) => { if (build) broadcast(); }).catch(() => {});
+    }
     const autoEnemyHeroes = state.gameState.lineups?.enemies ?? [];
     if (autoEnemyHeroes.length > 0) {
       const inferredThreats = inferThreats(autoEnemyHeroes, heroCatalog());

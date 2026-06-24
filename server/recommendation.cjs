@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { getHeroProfile, getItemProfile } = require("./public-data.cjs");
+const { getHeroBuild } = require("./item-popularity.cjs");
 
 const rootDir = path.resolve(__dirname, "..");
 const items = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "items.json"), "utf8"));
@@ -125,7 +126,9 @@ const globalSituational = {
 };
 
 function itemName(itemId) {
-  return items[itemId]?.name ?? itemId.replace(/^item_/, "");
+  // Curated Chinese name first, then the OpenDota display name (covers the long tail of
+  // data-driven items), then the bare key as a last resort.
+  return items[itemId]?.name ?? getItemProfile(itemId)?.name ?? itemId.replace(/^item_/, "");
 }
 
 function cdnUrl(pathname) {
@@ -273,7 +276,9 @@ function recommend(gameState, context = {}) {
   const heroId = gameState?.hero?.id;
   const explicitBuild = heroBuilds[heroId];
   const profile = getHeroProfile(heroId);
-  const build = explicitBuild ?? inferGenericBuild(heroId);
+  // Priority: hand-curated hero rules > OpenDota real item-popularity data > generic role template.
+  const dataBuild = explicitBuild ? null : getHeroBuild(heroId);
+  const build = explicitBuild ?? dataBuild ?? inferGenericBuild(heroId);
   const inventory = normalizeInventory(gameState?.items);
   const threats = context.threats ?? [];
 
@@ -320,9 +325,11 @@ function recommend(gameState, context = {}) {
   const heroName = explicitBuild?.name ?? profile?.localizedName ?? gameState.hero?.displayName ?? heroId;
   const sourceNote = explicitBuild
     ? "使用英雄专属规则。"
-    : profile
-      ? "该英雄暂无专属构筑，已根据 OpenDota 公开角色数据使用通用规则。"
-      : "该英雄暂无专属构筑且未同步公开数据，已使用全英雄保守通用规则。";
+    : dataBuild
+      ? "已根据 OpenDota 真实出装率（数据驱动）给出主线路线。"
+      : profile
+        ? "该英雄暂无专属构筑，已根据 OpenDota 公开角色数据使用通用规则。"
+        : "该英雄暂无专属构筑且未同步公开数据，已使用全英雄保守通用规则。";
 
   return {
     status: "ready",

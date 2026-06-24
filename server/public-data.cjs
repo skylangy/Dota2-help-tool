@@ -83,6 +83,7 @@ function summarizePayload(heroes, items) {
       behavior: item.behavior ?? null,
       created: Boolean(item.created),
       tier: item.tier ?? null,
+      components: Array.isArray(item.components) ? item.components : null,
       img: item.img ?? null
     }));
 
