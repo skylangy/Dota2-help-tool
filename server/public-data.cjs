@@ -7,6 +7,12 @@ const SOURCES = {
   heroes: "https://api.opendota.com/api/constants/heroes",
   items: "https://api.opendota.com/api/constants/items"
 };
+const PATCH_SOURCE = "https://api.opendota.com/api/constants/patch";
+
+// The current Dota patch is the last entry of the patch list (e.g. "7.41").
+function latestPatchName(patches) {
+  return Array.isArray(patches) && patches.length > 0 ? patches[patches.length - 1].name : null;
+}
 
 function getCacheDir() {
   const appData = process.env.APPDATA || path.join(os.homedir(), ".config");
@@ -61,7 +67,7 @@ function writeCache(payload) {
   };
 }
 
-function summarizePayload(heroes, items) {
+function summarizePayload(heroes, items, patch) {
   const heroList = Object.values(heroes).map((hero) => ({
     id: hero.id,
     name: hero.name,
@@ -89,6 +95,7 @@ function summarizePayload(heroes, items) {
 
   return {
     generatedAt: new Date().toISOString(),
+    patch,
     sources: SOURCES,
     heroCount: heroList.length,
     itemCount: itemList.length,
@@ -103,6 +110,7 @@ function cacheStatus() {
     cacheFile: getCacheFile(),
     hasCache: Boolean(cache),
     generatedAt: cache?.generatedAt ?? null,
+    patch: cache?.patch ?? null,
     heroCount: cache?.heroCount ?? 0,
     itemCount: cache?.itemCount ?? 0,
     sources: SOURCES
@@ -121,7 +129,8 @@ async function fetchJson(url) {
     const response = await fetch(url, {
       headers: {
         "User-Agent": userAgent
-      }
+      },
+      signal: AbortSignal.timeout(15000)
     });
 
     if (response.ok) {
@@ -139,13 +148,34 @@ async function fetchJson(url) {
 }
 
 async function syncPublicData() {
-  const [heroes, items] = await Promise.all([
+  const [heroes, items, patches] = await Promise.all([
     fetchJson(SOURCES.heroes),
-    fetchJson(SOURCES.items)
+    fetchJson(SOURCES.items),
+    fetchJson(PATCH_SOURCE).catch(() => null)
   ]);
-  const payload = summarizePayload(heroes, items);
+  const payload = summarizePayload(heroes, items, latestPatchName(patches));
   writeCache(payload);
   return cacheStatus();
+}
+
+function currentPatch() {
+  return readCache()?.patch ?? null;
+}
+
+// Re-sync public data when Dota has shipped a new patch since the cache was built, so item
+// builds / benchmarks reflect the current version rather than stale meta.
+async function refreshIfNewPatch() {
+  let latest = null;
+  try {
+    latest = latestPatchName(await fetchJson(PATCH_SOURCE));
+  } catch {
+    return { changed: false, patch: currentPatch() };
+  }
+  if (latest && latest !== currentPatch()) {
+    await syncPublicData();
+    return { changed: true, patch: latest };
+  }
+  return { changed: false, patch: latest ?? currentPatch() };
 }
 
 function publicDataSummary() {
@@ -197,10 +227,12 @@ function getPublicDataCache() {
 
 module.exports = {
   cacheStatus,
+  currentPatch,
   getHeroProfile,
   getItemProfile,
   getPublicDataCache,
   heroCatalog,
   publicDataSummary,
+  refreshIfNewPatch,
   syncPublicData
 };

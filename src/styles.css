@@ -1043,6 +1043,32 @@ h2 {
   margin-bottom: 12px;
 }
 
+.replay-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 7px;
+}
+
+.replay-timeline-label {
+  color: #8c9d9b;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.replay-timeline-entry {
+  color: #c6d2d0;
+  font-size: 12px;
+}
+
+.replay-timeline-entry em {
+  color: #7bd5c1;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .phone-qr-wrap {
   display: grid;
   justify-items: center;

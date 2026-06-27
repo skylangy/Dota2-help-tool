@@ -952,6 +952,16 @@ function ReplayPanel() {
                   <strong>{player.heroName}</strong>
                   <p>{player.issues.join(" ")}</p>
                   <ReplayItems items={player.itemSlots ?? player.items ?? []} />
+                  {(player.timeline?.length ?? 0) > 0 ? (
+                    <div className="replay-timeline">
+                      <span className="replay-timeline-label">出装节奏</span>
+                      {player.timeline.map((entry, index) => (
+                        <span className="replay-timeline-entry" key={`${entry.key}-${index}`}>
+                          {entry.name} <em>{entry.time}</em>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <span>{player.kda}</span>
                 <span>{player.gpm} GPM</span>

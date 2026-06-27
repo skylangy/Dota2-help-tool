@@ -7,7 +7,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { getPublicDataCache } = require("./public-data.cjs");
+const { getPublicDataCache, currentPatch } = require("./public-data.cjs");
 const { userAgent } = require("./version.cjs");
 
 const SOURCE = (heroId) => `https://api.opendota.com/api/heroes/${heroId}/itemPopularity`;
@@ -111,13 +111,14 @@ async function ensureHeroBuild(heroName) {
 
   const cache = readCache();
   const existing = cache[heroName];
-  if (existing?.fetchedAt && existing.version === PARSE_VERSION && Date.now() - existing.fetchedAt < TTL_MS) {
+  const patch = currentPatch();
+  if (existing?.fetchedAt && existing.version === PARSE_VERSION && existing.patch === patch && Date.now() - existing.fetchedAt < TTL_MS) {
     return existing.build;
   }
 
   let raw;
   try {
-    const res = await fetch(SOURCE(heroId), { headers: { "User-Agent": userAgent } });
+    const res = await fetch(SOURCE(heroId), { headers: { "User-Agent": userAgent }, signal: AbortSignal.timeout(10000) });
     if (!res.ok) return existing?.build ?? null;
     raw = await res.json();
   } catch {
@@ -128,7 +129,7 @@ async function ensureHeroBuild(heroName) {
   if ((build.core?.length ?? 0) === 0 && (build.late?.length ?? 0) === 0) {
     return existing?.build ?? null; // nothing usable; keep falling back to generic rules
   }
-  writeCache({ ...readCache(), [heroName]: { fetchedAt: Date.now(), version: PARSE_VERSION, build } });
+  writeCache({ ...readCache(), [heroName]: { fetchedAt: Date.now(), version: PARSE_VERSION, patch, build } });
   return build;
 }
 

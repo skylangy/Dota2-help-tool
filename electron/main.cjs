@@ -1,6 +1,7 @@
 const path = require("node:path");
 const { app, BrowserWindow, Menu, clipboard, ipcMain, screen, shell } = require("electron");
 const { startServer } = require("../server/server.cjs");
+const { refreshIfNewPatch } = require("../server/public-data.cjs");
 
 let mainWindow;
 let localServer;
@@ -68,6 +69,16 @@ app.whenReady().then(async () => {
   });
   localServer = await startServer({ silent: false, allowExisting: true });
   await createWindow();
+
+  // If Dota has shipped a new patch since last run, re-sync public data so builds/benchmarks
+  // reflect the current version. Non-blocking; failures are ignored (offline-safe).
+  refreshIfNewPatch()
+    .then((result) => {
+      if (result.changed) {
+        console.log(`Synced public data for new Dota patch ${result.patch}`);
+      }
+    })
+    .catch(() => undefined);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
