@@ -5,6 +5,7 @@ const { WebSocketServer } = require("ws");
 const { parseGameState } = require("./gsi.cjs");
 const { recommend, threatLabels, heroBuilds } = require("./recommendation.cjs");
 const { ensureHeroBuild } = require("./item-popularity.cjs");
+const { getPlayerProfile } = require("./player-profile.cjs");
 const { installConfig, readGsiToken, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
 const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
@@ -37,6 +38,7 @@ function isAllowedOrigin(origin) {
 
 function createState() {
   return {
+    accountId: null,
     gameState: {
       receivedAt: null,
       hero: { id: "", displayName: "" },
@@ -111,6 +113,7 @@ function createApp() {
 
   function snapshot() {
     return {
+      accountId: state.accountId,
       gameState: state.gameState,
       context: state.context,
       recommendation: recommend(state.gameState, state.context),
@@ -183,6 +186,11 @@ function createApp() {
     }
 
     state.gameState = parseGameState(req.body);
+    // Capture the player's own account id from GSI so the growth panel can pre-fill it.
+    const accountId = req.body?.player?.accountid;
+    if (accountId && String(accountId) !== "0") {
+      state.accountId = String(accountId);
+    }
     // Lazily fetch real item-popularity data for non-curated heroes; re-broadcast when it lands.
     const heroId = state.gameState.hero?.id;
     if (heroId && !heroBuilds[heroId]) {
@@ -302,6 +310,20 @@ function createApp() {
 
   app.get("/api/phone/status", (_req, res) => {
     res.json(phoneStatus());
+  });
+
+  app.post("/api/profile", async (req, res) => {
+    const accountId = req.body?.accountId ?? state.accountId;
+    if (!accountId) {
+      res.status(400).json({ code: "NO_ACCOUNT_ID", message: "请输入你的 Dota 好友编号（账号 ID）。" });
+      return;
+    }
+    try {
+      res.json(await getPlayerProfile(accountId, { force: Boolean(req.body?.force) }));
+    } catch (error) {
+      const status = error.code === "INVALID_ACCOUNT_ID" ? 400 : error.code === "NO_PUBLIC_MATCHES" ? 404 : 502;
+      res.status(status).json({ code: error.code ?? "PROFILE_FAILED", message: error.message });
+    }
   });
 
   app.post("/api/phone/enable", async (_req, res) => {

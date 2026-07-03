@@ -1036,6 +1036,102 @@ function CompactPanel({ recommendation, onExitCompact }) {
   );
 }
 
+function MetricDelta({ delta }) {
+  if (delta == null) return null;
+  if (delta > 0) return <span className="delta up">↑{delta}</span>;
+  if (delta < 0) return <span className="delta down">↓{Math.abs(delta)}</span>;
+  return <span className="delta flat">持平</span>;
+}
+
+function GrowthPanel({ capturedAccountId }) {
+  const [accountId, setAccountId] = useState(capturedAccountId ?? "");
+  const [profile, setProfile] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (capturedAccountId) setAccountId((prev) => prev || capturedAccountId);
+  }, [capturedAccountId]);
+
+  async function analyze() {
+    setBusy(true);
+    setError("");
+    try {
+      setProfile(await postJson("/api/profile", { accountId: accountId.trim(), force: true }));
+    } catch (e) {
+      setError(e.message);
+      setProfile(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <aside className="panel growth-panel">
+      <div className="panel-title">
+        <BarChart3 size={18} />
+        <h2>个人成长</h2>
+      </div>
+      <p className="setup-copy">
+        输入你的 Dota 好友编号（个人资料里那串数字），分析你最近 20 局，按该英雄的分位基准找出最该练的短板。需在 Dota 设置里开启「公开比赛数据」。
+      </p>
+      <div className="replay-input">
+        <input placeholder="Dota 好友编号（账号 ID）" value={accountId} onChange={(event) => setAccountId(event.target.value)} />
+        <button className="icon-button" type="button" onClick={analyze} disabled={busy} aria-label="分析对局" title="分析对局">
+          {busy ? <RefreshCw className="spin" size={17} /> : <BarChart3 size={17} />}
+        </button>
+      </div>
+      {error ? <p className="setup-error">{error}</p> : null}
+      {profile ? (
+        <div className="growth-result">
+          <div className="replay-summary">
+            <Stat label="近 20 局" value={`${profile.recent.wins}-${profile.recent.losses}`} />
+            <Stat label="胜率" value={`${profile.recent.winRate}%`} />
+          </div>
+          <div className={profile.focus.length > 0 || !profile.metrics.some((m) => m.avgPercentile != null) ? "growth-focus" : "growth-focus ok"}>
+            <span>本周重点</span>
+            {profile.focus.length > 0
+              ? profile.focus.map((f) => (
+                <p key={f.label}><strong>{f.label}</strong>（约第 {f.avgPercentile} 分位）— {f.advice}</p>
+              ))
+              : profile.metrics.some((m) => m.avgPercentile != null)
+                ? <p>各项指标都不错，重点复盘关键团战和决策细节。</p>
+                : <p>暂时拿不到这些英雄的分位基准（可能数据未同步或网络问题），稍后再分析一次。</p>}
+          </div>
+          {profile.trend ? (
+            <p className="growth-trend">
+              对比上次：胜率 {profile.trend.winRateDelta > 0 ? `↑${profile.trend.winRateDelta}` : profile.trend.winRateDelta < 0 ? `↓${Math.abs(profile.trend.winRateDelta)}` : "持平"}%
+              {profile.trend.previousFocus.length > 0 ? `；上次重点「${profile.trend.previousFocus.join("、")}」，看下方对应条变化。` : "。"}
+            </p>
+          ) : (
+            <p className="growth-trend muted">首次分析，作为你的基线。打几局后再来看进步。</p>
+          )}
+          <div className="growth-metrics">
+            {profile.metrics.map((m) => (
+              <div className="growth-metric" key={m.key}>
+                <div className="growth-metric-head">
+                  <span>{m.label}</span>
+                  <strong>
+                    {m.avgPercentile == null ? "-" : `第 ${m.avgPercentile} 分位`}
+                    {profile.trend ? <MetricDelta delta={profile.trend.deltas[m.key]} /> : null}
+                  </strong>
+                </div>
+                <div className="growth-bar"><div className="growth-bar-fill" style={{ width: `${m.avgPercentile ?? 0}%` }} /></div>
+              </div>
+            ))}
+          </div>
+          <div className="inferred-tags">
+            <span>常用英雄</span>
+            {profile.topHeroes.map((h) => (
+              <p key={h.heroId}>{h.heroName} · {h.games} 场 · 胜率 {h.winRate}%</p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 export default function App() {
   const { connected, setSnapshot, snapshot } = useLiveSnapshot();
   const { installSetup, refreshSetup, setup, setupBusy, setupError } = useSetupStatus();
@@ -1311,6 +1407,7 @@ export default function App() {
               复盘与教练
             </summary>
             <div className="drawer-stack">
+              <GrowthPanel capturedAccountId={snapshot?.accountId ?? null} />
               <ReplayPanel />
               <AiPanel aiConfig={aiConfig} onConfigChange={updateAiConfig} />
             </div>
