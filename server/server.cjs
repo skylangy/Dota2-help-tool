@@ -5,7 +5,7 @@ const { WebSocketServer } = require("ws");
 const { parseGameState } = require("./gsi.cjs");
 const { recommend, threatLabels, heroBuilds } = require("./recommendation.cjs");
 const { ensureHeroBuild } = require("./item-popularity.cjs");
-const { getPlayerProfile } = require("./player-profile.cjs");
+const { getPlayerProfile, getCachedProfile } = require("./player-profile.cjs");
 const { installConfig, readGsiToken, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
 const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
@@ -39,6 +39,7 @@ function isAllowedOrigin(origin) {
 function createState() {
   return {
     accountId: null,
+    growthFocus: [],
     gameState: {
       receivedAt: null,
       hero: { id: "", displayName: "" },
@@ -114,6 +115,7 @@ function createApp() {
   function snapshot() {
     return {
       accountId: state.accountId,
+      growthFocus: state.growthFocus,
       gameState: state.gameState,
       context: state.context,
       recommendation: recommend(state.gameState, state.context),
@@ -190,6 +192,11 @@ function createApp() {
     const accountId = req.body?.player?.accountid;
     if (accountId && String(accountId) !== "0") {
       state.accountId = String(accountId);
+      // Surface this player's saved "focus" as a live reminder (uses cache only, no API call).
+      const cachedProfile = getCachedProfile(state.accountId);
+      if (cachedProfile) {
+        state.growthFocus = (cachedProfile.focus ?? []).map((f) => f.label);
+      }
     }
     // Lazily fetch real item-popularity data for non-curated heroes; re-broadcast when it lands.
     const heroId = state.gameState.hero?.id;
@@ -319,7 +326,11 @@ function createApp() {
       return;
     }
     try {
-      res.json(await getPlayerProfile(accountId, { force: Boolean(req.body?.force) }));
+      const profile = await getPlayerProfile(accountId, { force: Boolean(req.body?.force) });
+      // Remember the focus so it can be shown as a live in-game reminder.
+      state.growthFocus = (profile.focus ?? []).map((f) => f.label);
+      broadcast();
+      res.json(profile);
     } catch (error) {
       const status = error.code === "INVALID_ACCOUNT_ID" ? 400 : error.code === "NO_PUBLIC_MATCHES" ? 404 : 502;
       res.status(status).json({ code: error.code ?? "PROFILE_FAILED", message: error.message });

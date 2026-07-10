@@ -995,7 +995,7 @@ function ReplayItems({ items = [] }) {
   );
 }
 
-function CompactPanel({ recommendation, onExitCompact }) {
+function CompactPanel({ recommendation, growthFocus = [], onExitCompact }) {
   const first = recommendation.suggestions?.[0];
   const alternatives = (recommendation.suggestions ?? []).slice(1, 3);
 
@@ -1030,6 +1030,9 @@ function CompactPanel({ recommendation, onExitCompact }) {
             ))}
           </div>
         </section>
+      ) : null}
+      {growthFocus.length > 0 ? (
+        <p className="compact-focus">本周重点：{growthFocus.join("、")}</p>
       ) : null}
       <p className="compact-hint">独占全屏不显示，请用「无边框窗口」模式</p>
     </main>
@@ -1152,6 +1155,7 @@ export default function App() {
   const recommendation = snapshot?.recommendation ?? {};
   const context = snapshot?.context ?? { threats: [] };
   const threats = snapshot?.threats ?? {};
+  const growthFocus = snapshot?.growthFocus ?? [];
   const activeThreats = useMemo(() => new Set(context.manualThreats ?? context.threats ?? []), [context.manualThreats, context.threats]);
   const activeEnemyHeroes = context.enemyHeroes ?? [];
   const enemyHeroesSource = context.enemyHeroesSource ?? "manual";
@@ -1216,6 +1220,7 @@ export default function App() {
     return (
       <CompactPanel
         recommendation={recommendation}
+        growthFocus={growthFocus}
         onExitCompact={() => setCompactMode(false)}
       />
     );
@@ -1320,6 +1325,12 @@ export default function App() {
             <Brain size={18} />
             <h2>{recommendation.title ?? "等待建议"}</h2>
           </div>
+          {growthFocus.length > 0 ? (
+            <div className="focus-reminder">
+              <span>本周重点</span>
+              <p>记得练：{growthFocus.join("、")}</p>
+            </div>
+          ) : null}
           <div className="suggestions">
             {(recommendation.suggestions ?? []).map((suggestion) => (
               <article className="suggestion" key={`${suggestion.itemId}-${suggestion.priority}`}>
