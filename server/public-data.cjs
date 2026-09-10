@@ -8,6 +8,11 @@ const SOURCES = {
   items: "https://api.opendota.com/api/constants/items"
 };
 const PATCH_SOURCE = "https://api.opendota.com/api/constants/patch";
+const AUTO_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+let lastCheckedAt = null;
+let autoRefreshStarted = false;
+let autoRefreshTimer = null;
 
 // The current Dota patch is the last entry of the patch list (e.g. "7.41").
 function latestPatchName(patches) {
@@ -96,7 +101,7 @@ function summarizePayload(heroes, items, patch) {
   return {
     generatedAt: new Date().toISOString(),
     patch,
-    sources: SOURCES,
+    sources: { ...SOURCES, patch: PATCH_SOURCE },
     heroCount: heroList.length,
     itemCount: itemList.length,
     heroes: heroList,
@@ -113,7 +118,12 @@ function cacheStatus() {
     patch: cache?.patch ?? null,
     heroCount: cache?.heroCount ?? 0,
     itemCount: cache?.itemCount ?? 0,
-    sources: SOURCES
+    sources: { ...SOURCES, patch: PATCH_SOURCE },
+    autoUpdate: {
+      enabled: true,
+      intervalHours: AUTO_REFRESH_INTERVAL_MS / 3600000,
+      lastCheckedAt
+    }
   };
 }
 
@@ -155,6 +165,7 @@ async function syncPublicData() {
   ]);
   const payload = summarizePayload(heroes, items, latestPatchName(patches));
   writeCache(payload);
+  lastCheckedAt = new Date().toISOString();
   return cacheStatus();
 }
 
@@ -162,20 +173,46 @@ function currentPatch() {
   return readCache()?.patch ?? null;
 }
 
-// Re-sync public data when Dota has shipped a new patch since the cache was built, so item
-// builds / benchmarks reflect the current version rather than stale meta.
+// Re-sync public data when Dota has shipped a new patch since the cache was built.
 async function refreshIfNewPatch() {
+  lastCheckedAt = new Date().toISOString();
   let latest = null;
   try {
     latest = latestPatchName(await fetchJson(PATCH_SOURCE));
   } catch {
-    return { changed: false, patch: currentPatch() };
+    return { changed: false, patch: currentPatch(), checkedAt: lastCheckedAt };
   }
   if (latest && latest !== currentPatch()) {
     await syncPublicData();
-    return { changed: true, patch: latest };
+    return { changed: true, patch: latest, checkedAt: lastCheckedAt };
   }
-  return { changed: false, patch: latest ?? currentPatch() };
+  return { changed: false, patch: latest ?? currentPatch(), checkedAt: lastCheckedAt };
+}
+
+async function ensureFreshPublicData() {
+  if (!readCache()) {
+    try {
+      return { changed: true, initialSync: true, ...(await syncPublicData()) };
+    } catch (error) {
+      return { changed: false, initialSync: true, error: error.message, patch: currentPatch() };
+    }
+  }
+  return refreshIfNewPatch();
+}
+
+function startAutoRefresh() {
+  if (autoRefreshStarted) return;
+  autoRefreshStarted = true;
+
+  // Run after startup so server boot is never blocked by OpenDota availability.
+  setTimeout(() => {
+    ensureFreshPublicData().catch(() => {});
+  }, 1200).unref?.();
+
+  autoRefreshTimer = setInterval(() => {
+    ensureFreshPublicData().catch(() => {});
+  }, AUTO_REFRESH_INTERVAL_MS);
+  autoRefreshTimer.unref?.();
 }
 
 function publicDataSummary() {
@@ -225,14 +262,18 @@ function getPublicDataCache() {
   return readCache();
 }
 
+startAutoRefresh();
+
 module.exports = {
   cacheStatus,
   currentPatch,
+  ensureFreshPublicData,
   getHeroProfile,
   getItemProfile,
   getPublicDataCache,
   heroCatalog,
   publicDataSummary,
   refreshIfNewPatch,
+  startAutoRefresh,
   syncPublicData
 };
