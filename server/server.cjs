@@ -8,11 +8,13 @@ const { ensureHeroBuild } = require("./item-popularity.cjs");
 const { getPlayerProfile, getCachedProfile } = require("./player-profile.cjs");
 const { installConfig, readGsiToken, scanSetup } = require("./setup.cjs");
 const { aiCoach } = require("./ai.cjs");
-const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData } = require("./public-data.cjs");
+const { cacheStatus, heroCatalog, publicDataSummary, syncPublicData, startAutoRefresh } = require("./public-data.cjs");
 const { inferThreats } = require("./lineup.cjs");
 const { fetchMatch } = require("./replay.cjs");
 const { appVersion } = require("./version.cjs");
 const { startPhoneBridge } = require("./phone-bridge.cjs");
+const { compareItems, explainRecommendation, patchIntelligence } = require("./insights.cjs");
+const { publicConfig: telemetryConfig, sendEvent } = require("./telemetry.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -24,10 +26,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 function isAllowedOrigin(origin) {
-  if (!origin || ALLOWED_ORIGINS.has(origin)) {
-    return true;
-  }
-
+  if (!origin || ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const parsed = new URL(origin);
     return parsed.protocol === "http:" && ["127.0.0.1", "localhost"].includes(parsed.hostname);
@@ -81,8 +80,11 @@ function diagnosticsSnapshot(state) {
       hasCache: data.hasCache,
       heroCount: data.heroCount,
       itemCount: data.itemCount,
-      generatedAt: data.generatedAt
+      generatedAt: data.generatedAt,
+      patch: data.patch ?? null,
+      autoUpdate: data.autoUpdate ?? null
     },
+    telemetry: telemetryConfig(),
     safety: {
       dataSources: [
         "Dota 2 Game State Integration JSON sent to localhost",
@@ -127,22 +129,14 @@ function createApp() {
     const payload = snapshot();
     const message = JSON.stringify({ type: "snapshot", payload });
     for (const client of wss.clients) {
-      if (client.readyState === client.OPEN) {
-        client.send(message);
-      }
+      if (client.readyState === client.OPEN) client.send(message);
     }
-    // Mirror live updates to the phone second-screen, if the user has enabled it.
-    if (phoneBridge) {
-      phoneBridge.broadcast(payload);
-    }
+    if (phoneBridge) phoneBridge.broadcast(payload);
   }
 
   app.use(cors({
     origin(origin, callback) {
-      if (isAllowedOrigin(origin)) {
-        callback(null, true);
-        return;
-      }
+      if (isAllowedOrigin(origin)) return callback(null, true);
       callback(new Error(`Origin not allowed: ${origin}`));
     }
   }));
@@ -152,12 +146,24 @@ function createApp() {
     socket.send(JSON.stringify({ type: "snapshot", payload: snapshot() }));
   });
 
-  app.get("/api/state", (_req, res) => {
-    res.json(snapshot());
+  app.get("/api/state", (_req, res) => res.json(snapshot()));
+  app.get("/api/diagnostics", (_req, res) => res.json(diagnosticsSnapshot(state)));
+  app.get("/api/telemetry/status", (_req, res) => res.json(telemetryConfig()));
+
+  app.get("/api/insights/why", (req, res) => {
+    res.json(explainRecommendation(snapshot(), req.query.lang === "en" ? "en" : "zh"));
   });
 
-  app.get("/api/diagnostics", (_req, res) => {
-    res.json(diagnosticsSnapshot(state));
+  app.get("/api/insights/patch", (req, res) => {
+    res.json(patchIntelligence(req.query.lang === "en" ? "en" : "zh"));
+  });
+
+  app.post("/api/insights/compare", (req, res) => {
+    try {
+      res.json(compareItems(snapshot(), req.body?.itemA, req.body?.itemB, req.body?.lang === "en" ? "en" : "zh"));
+    } catch (error) {
+      res.status(error.code === "ITEM_NOT_FOUND" ? 404 : 400).json({ code: error.code ?? "COMPARE_FAILED", message: error.message });
+    }
   });
 
   app.post("/api/context", (req, res) => {
@@ -188,21 +194,18 @@ function createApp() {
     }
 
     state.gameState = parseGameState(req.body);
-    // Capture the player's own account id from GSI so the growth panel can pre-fill it.
     const accountId = req.body?.player?.accountid;
     if (accountId && String(accountId) !== "0") {
       state.accountId = String(accountId);
-      // Surface this player's saved "focus" as a live reminder (uses cache only, no API call).
       const cachedProfile = getCachedProfile(state.accountId);
-      if (cachedProfile) {
-        state.growthFocus = (cachedProfile.focus ?? []).map((f) => f.label);
-      }
+      if (cachedProfile) state.growthFocus = (cachedProfile.focus ?? []).map((f) => f.label);
     }
-    // Lazily fetch real item-popularity data for non-curated heroes; re-broadcast when it lands.
+
     const heroId = state.gameState.hero?.id;
     if (heroId && !heroBuilds[heroId]) {
       ensureHeroBuild(heroId).then((build) => { if (build) broadcast(); }).catch(() => {});
     }
+
     const autoEnemyHeroes = state.gameState.lineups?.enemies ?? [];
     if (autoEnemyHeroes.length > 0) {
       const inferredThreats = inferThreats(autoEnemyHeroes, heroCatalog());
@@ -224,10 +227,7 @@ function createApp() {
   app.post("/api/mock", (_req, res) => {
     state.gameState = {
       receivedAt: new Date().toISOString(),
-      hero: {
-        id: "npc_dota_hero_juggernaut",
-        displayName: "Juggernaut"
-      },
+      hero: { id: "npc_dota_hero_juggernaut", displayName: "Juggernaut" },
       gameTime: 16 * 60 + 28,
       level: 11,
       gold: 1850,
@@ -244,37 +244,22 @@ function createApp() {
     res.json(snapshot());
   });
 
-  app.get("/api/setup/status", (_req, res) => {
-    res.json(scanSetup());
-  });
-
+  app.get("/api/setup/status", (_req, res) => res.json(scanSetup()));
   app.post("/api/setup/install", (_req, res) => {
     try {
       res.json(installConfig());
     } catch (error) {
-      res.status(404).json({
-        code: error.code ?? "SETUP_FAILED",
-        message: error.message
-      });
+      res.status(404).json({ code: error.code ?? "SETUP_FAILED", message: error.message });
     }
   });
 
-  app.get("/api/data/status", (_req, res) => {
-    res.json(publicDataSummary());
-  });
-
-  app.get("/api/heroes", (_req, res) => {
-    res.json({ heroes: heroCatalog() });
-  });
-
+  app.get("/api/data/status", (_req, res) => res.json(publicDataSummary()));
+  app.get("/api/heroes", (_req, res) => res.json({ heroes: heroCatalog() }));
   app.post("/api/data/sync", async (_req, res) => {
     try {
       res.json(await syncPublicData());
     } catch (error) {
-      res.status(502).json({
-        code: "PUBLIC_DATA_SYNC_FAILED",
-        message: error.message
-      });
+      res.status(502).json({ code: "PUBLIC_DATA_SYNC_FAILED", message: error.message });
     }
   });
 
@@ -282,10 +267,7 @@ function createApp() {
     try {
       res.json(await aiCoach(req.body ?? {}, snapshot(), cacheStatus()));
     } catch (error) {
-      res.status(502).json({
-        code: "AI_COACH_FAILED",
-        message: error.message
-      });
+      res.status(502).json({ code: "AI_COACH_FAILED", message: error.message });
     }
   });
 
@@ -293,17 +275,12 @@ function createApp() {
     try {
       res.json(await fetchMatch(req.params.matchId));
     } catch (error) {
-      res.status(error.code === "INVALID_MATCH_ID" ? 400 : 502).json({
-        code: error.code ?? "REPLAY_FETCH_FAILED",
-        message: error.message
-      });
+      res.status(error.code === "INVALID_MATCH_ID" ? 400 : 502).json({ code: error.code ?? "REPLAY_FETCH_FAILED", message: error.message });
     }
   });
 
   function phoneStatus() {
-    if (!phoneBridge) {
-      return { enabled: false };
-    }
+    if (!phoneBridge) return { enabled: false };
     return {
       enabled: true,
       port: phoneBridge.port,
@@ -315,9 +292,7 @@ function createApp() {
     };
   }
 
-  app.get("/api/phone/status", (_req, res) => {
-    res.json(phoneStatus());
-  });
+  app.get("/api/phone/status", (_req, res) => res.json(phoneStatus()));
 
   app.post("/api/profile", async (req, res) => {
     const accountId = req.body?.accountId ?? state.accountId;
@@ -327,7 +302,6 @@ function createApp() {
     }
     try {
       const profile = await getPlayerProfile(accountId, { force: Boolean(req.body?.force) });
-      // Remember the focus so it can be shown as a live in-game reminder.
       state.growthFocus = (profile.focus ?? []).map((f) => f.label);
       broadcast();
       res.json(profile);
@@ -339,9 +313,7 @@ function createApp() {
 
   app.post("/api/phone/enable", async (_req, res) => {
     try {
-      if (!phoneBridge) {
-        phoneBridge = await startPhoneBridge({ getSnapshot: snapshot });
-      }
+      if (!phoneBridge) phoneBridge = await startPhoneBridge({ getSnapshot: snapshot });
       res.json(phoneStatus());
     } catch (error) {
       res.status(500).json({ code: "PHONE_BRIDGE_FAILED", message: error.message });
@@ -356,7 +328,17 @@ function createApp() {
     res.json(phoneStatus());
   });
 
-  return { app, server, wss, stopPhoneBridge: async () => { if (phoneBridge) { await phoneBridge.stop(); phoneBridge = null; } } };
+  return {
+    app,
+    server,
+    wss,
+    stopPhoneBridge: async () => {
+      if (phoneBridge) {
+        await phoneBridge.stop();
+        phoneBridge = null;
+      }
+    }
+  };
 }
 
 function startServer(options = {}) {
@@ -368,9 +350,7 @@ function startServer(options = {}) {
   return new Promise((resolve, reject) => {
     created.server.once("error", (error) => {
       if (error.code === "EADDRINUSE" && options.allowExisting) {
-        if (!silent) {
-          console.log(`Dota 2 Help Tool server already running at http://${host}:${port}`);
-        }
+        if (!silent) console.log(`Dota 2 Help Tool server already running at http://${host}:${port}`);
         resolve({ ...created, existing: true, host, port });
         return;
       }
@@ -382,6 +362,8 @@ function startServer(options = {}) {
         console.log(`Dota 2 Help Tool server listening at http://${host}:${port}`);
         console.log(`GSI endpoint: http://${host}:${port}/gsi`);
       }
+      startAutoRefresh();
+      sendEvent("app_open", { source: "local_server_start" }).catch(() => {});
       resolve({ ...created, existing: false, host, port });
     });
   });
