@@ -36,31 +36,64 @@ function getInstallId() {
   return installId;
 }
 
+function consentStatus() {
+  const state = readState();
+  return {
+    decided: typeof state.telemetryConsent === "boolean",
+    consented: state.telemetryConsent === true,
+    updatedAt: state.telemetryConsentUpdatedAt ?? null
+  };
+}
+
+function setConsent(consented) {
+  const state = readState();
+  const next = {
+    ...state,
+    telemetryConsent: Boolean(consented),
+    telemetryConsentUpdatedAt: new Date().toISOString()
+  };
+
+  if (!consented) {
+    delete next.installId;
+    delete next.createdAt;
+  }
+
+  writeState(next);
+  return consentStatus();
+}
+
 function publicConfig() {
   const config = readConfig();
+  const consent = consentStatus();
   return {
     enabled: Boolean(config.enabled && config.endpoint),
     endpointConfigured: Boolean(config.endpoint),
+    consent,
     sendsInstallId: config.sendInstallId !== false,
+    collectedFields: ["event", "appVersion", "occurredAt", ...(config.sendInstallId !== false ? ["randomInstallId"] : [])],
     privacy: {
       sendsSteamId: false,
       sendsMatchData: false,
       sendsMachineName: false,
+      sendsHardwareId: false,
       sendsIpFromClient: false,
-      sendsGameplayState: false
+      sendsGameplayState: false,
+      sendsHeroOrItems: false,
+      sendsAccountId: false
     }
   };
 }
 
 async function sendEvent(event, extra = {}) {
   const config = readConfig();
+  const consent = consentStatus();
   if (!config.enabled || !config.endpoint) return { sent: false, reason: "disabled" };
+  if (!consent.consented) return { sent: false, reason: "not_consented" };
 
   const payload = {
     event,
     appVersion,
     occurredAt: new Date().toISOString(),
-    platform: process.platform,
     ...extra
   };
 
@@ -80,6 +113,8 @@ async function sendEvent(event, extra = {}) {
 }
 
 module.exports = {
+  consentStatus,
   publicConfig,
-  sendEvent
+  sendEvent,
+  setConsent
 };
