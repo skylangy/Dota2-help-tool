@@ -14,7 +14,7 @@ const { fetchMatch } = require("./replay.cjs");
 const { appVersion } = require("./version.cjs");
 const { startPhoneBridge } = require("./phone-bridge.cjs");
 const { compareItems, explainRecommendation, patchIntelligence } = require("./insights.cjs");
-const { publicConfig: telemetryConfig, sendEvent } = require("./telemetry.cjs");
+const { publicConfig: telemetryConfig, sendEvent, setConsent } = require("./telemetry.cjs");
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3008;
@@ -149,6 +149,15 @@ function createApp() {
   app.get("/api/state", (_req, res) => res.json(snapshot()));
   app.get("/api/diagnostics", (_req, res) => res.json(diagnosticsSnapshot(state)));
   app.get("/api/telemetry/status", (_req, res) => res.json(telemetryConfig()));
+  app.post("/api/telemetry/consent", async (req, res) => {
+    const consented = req.body?.consented === true;
+    const consent = setConsent(consented);
+    let event = { sent: false, reason: consented ? "pending" : "declined" };
+    if (consented) {
+      event = await sendEvent("app_open", { source: "consent_granted" });
+    }
+    res.json({ ...telemetryConfig(), consent, event });
+  });
 
   app.get("/api/insights/why", (req, res) => {
     res.json(explainRecommendation(snapshot(), req.query.lang === "en" ? "en" : "zh"));
@@ -363,6 +372,7 @@ function startServer(options = {}) {
         console.log(`GSI endpoint: http://${host}:${port}/gsi`);
       }
       startAutoRefresh();
+      // sendEvent is consent-gated; no network telemetry is sent until the user opts in.
       sendEvent("app_open", { source: "local_server_start" }).catch(() => {});
       resolve({ ...created, existing: false, host, port });
     });
